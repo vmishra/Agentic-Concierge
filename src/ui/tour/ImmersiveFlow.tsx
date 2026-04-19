@@ -223,6 +223,29 @@ function fmtTime(s: number): string {
 // The scene
 // -----------------------------------------------------------------------------
 
+/**
+ * Symmetric three-row architecture.
+ *
+ *   row 1 · y = 110   skills row (centred)
+ *   row 2 · y = 290   USER  ·  HUB  ·  MEMORY
+ *   row 3 · y = 480   five specialists in a horizontal row
+ *   row 4 · y = 580   bottom info band (three equal panels)
+ *
+ * Every element is placed on this grid. The hub lives at (600, 310) —
+ * exactly on the centre axis.
+ */
+const HUB = { x: 600, y: 310, r: 84 }
+const USER_BOX = { x: 60, y: 250, w: 280, h: 120 }
+const MEMORY_BOX = { x: 860, y: 220, w: 280, h: 220 }
+const SPECIALIST_Y = 500
+const SPECIALIST_R = 40
+const SPECIALIST_CENTRES = [260, 430, 600, 770, 940]
+const BOTTOM_Y = 580
+const BOTTOM_H = 130
+const PANEL_L = { x: 40, y: BOTTOM_Y, w: 360, h: BOTTOM_H }
+const PANEL_C = { x: 420, y: BOTTOM_Y, w: 360, h: BOTTOM_H }
+const PANEL_R = { x: 800, y: BOTTOM_Y, w: 360, h: BOTTOM_H }
+
 function Scene({ elapsed }: { elapsed: number }) {
   // Helper: "visible from" — opacity ramps in over 0.6s after t0.
   const vis = (t0: number, dur = 0.6) => clamp((elapsed - t0) / dur, 0, 1)
@@ -235,13 +258,12 @@ function Scene({ elapsed }: { elapsed: number }) {
       style={{ perspective: '1600px', perspectiveOrigin: '50% 40%' }}
     >
       <div className="absolute inset-0" style={{ transformStyle: 'preserve-3d' }}>
-        {/* Ground plane grid — conveys depth */}
         <GroundGrid />
 
-        {/* Central 'stage' svg containing all nodes */}
         <svg
           viewBox="0 0 1200 720"
           className="absolute inset-0 w-full h-full"
+          preserveAspectRatio="xMidYMid meet"
           style={{ transform: 'translateZ(0)' }}
         >
           <defs>
@@ -269,41 +291,34 @@ function Scene({ elapsed }: { elapsed: number }) {
             </marker>
           </defs>
 
-          {/* ---------- user ingress ---------- */}
           <UserNode show={vis(2)} pulse={between(2, 5)} />
-          <IngressBeam from={{ x: 120, y: 560 }} to={{ x: 600, y: 360 }} show={vis(3.0, 1.2)} flow={between(3, 6)} />
+          <IngressBeam
+            from={{ x: USER_BOX.x + USER_BOX.w, y: USER_BOX.y + USER_BOX.h / 2 }}
+            to={{ x: HUB.x - HUB.r, y: HUB.y }}
+            show={vis(3.0, 1.2)}
+            flow={between(3, 6)}
+          />
 
-          {/* ---------- Concierge hub ---------- */}
           <ConciergeHub show={vis(5)} pulse={between(5, TOTAL)} />
 
-          {/* ---------- Skills layer ---------- */}
           <SkillsLayer show={vis(8)} active={between(8, 12)} />
 
-          {/* ---------- Memory pillar ---------- */}
           <MemoryLayer show={vis(11.5)} active={between(11.5, 15)} />
 
-          {/* ---------- Specialist fan-out ---------- */}
           <SpecialistRing show={vis(15)} active={between(15, TOTAL)} elapsed={elapsed} />
 
-          {/* ---------- Tool orbits ---------- */}
           <ToolOrbit show={vis(19)} active={between(19, 23)} elapsed={elapsed} />
 
-          {/* ---------- Research loop ---------- */}
           <ResearchLoop show={vis(22.5)} elapsed={elapsed} />
 
-          {/* ---------- A2UI artifacts streaming ---------- */}
           <ArtifactStream show={vis(26.5)} elapsed={elapsed} />
 
-          {/* ---------- Human-in-the-loop pause ---------- */}
           <HitlGate show={vis(30.5)} elapsed={elapsed} />
 
-          {/* ---------- Context compaction ---------- */}
           <ContextCompact show={vis(34.5)} elapsed={elapsed} />
 
-          {/* ---------- Final dossier ---------- */}
           <Dossier show={vis(37.5)} elapsed={elapsed} />
 
-          {/* ---------- Credits ---------- */}
           <Credits show={vis(41.0)} />
         </svg>
       </div>
@@ -352,20 +367,25 @@ function GroundGrid() {
 // -----------------------------------------------------------------------------
 
 function UserNode({ show, pulse }: { show: number; pulse: number }) {
+  const b = USER_BOX
   return (
     <g style={{ opacity: show }}>
-      <rect x={40} y={520} width={180} height={70} rx={10} fill="oklch(18% 0.012 260)" stroke={ACCENT} strokeWidth={1} filter="url(#iGlow)" />
-      <text x={58} y={546} fontSize="11" letterSpacing="2.2" fill={SUBTLE}>
-        USER
+      <rect x={b.x} y={b.y} width={b.w} height={b.h} rx={12} fill="oklch(18% 0.012 260)" stroke={ACCENT} strokeWidth={1} filter="url(#iGlow)" />
+      <text x={b.x + 20} y={b.y + 30} fontSize="10" letterSpacing="2.4" fill={SUBTLE} fontWeight={500}>
+        USER REQUEST
       </text>
-      <text x={58} y={568} fontSize="13" fill={WHITE} fontFamily="Geist Mono, ui-monospace, monospace">
+      <line x1={b.x + 20} y1={b.y + 42} x2={b.x + b.w - 20} y2={b.y + 42} stroke="oklch(28% 0.01 260)" strokeWidth={0.5} />
+      <text x={b.x + 20} y={b.y + 68} fontSize="14" fill={WHITE} fontFamily="Geist Mono, ui-monospace, monospace">
         "Wimbledon 2026"
       </text>
-      <text x={58} y={584} fontSize="10" fill={MUTED}>
+      <text x={b.x + 20} y={b.y + 90} fontSize="11" fill={MUTED}>
         family of six · 5 nights
       </text>
+      <text x={b.x + 20} y={b.y + 106} fontSize="10.5" fill={SUBTLE}>
+        two dietary needs
+      </text>
       {pulse > 0 ? (
-        <circle cx={210} cy={556} r={3} fill={ACCENT} style={{ animation: 'pulseGlow 1.4s ease-in-out infinite' }} />
+        <circle cx={b.x + b.w - 22} cy={b.y + 30} r={3} fill={ACCENT} style={{ animation: 'pulseGlow 1.4s ease-in-out infinite' }} />
       ) : null}
     </g>
   )
@@ -381,14 +401,21 @@ function IngressBeam({ from, to, show, flow }: { from: { x: number; y: number };
 
 function ConciergeHub({ show, pulse }: { show: number; pulse: number }) {
   return (
-    <g style={{ opacity: show, transform: `translate(0, ${(1 - show) * 20}px)`, transformOrigin: '600px 360px' }}>
-      <circle cx={600} cy={360} r={160} fill="url(#hub)" opacity={0.5} />
-      <circle cx={600} cy={360} r={80} fill="oklch(18% 0.012 260)" stroke={ACCENT} strokeWidth={1.5} filter="url(#iStrong)" />
-      <circle cx={600} cy={360} r={12} fill={ACCENT} filter="url(#iStrong)" style={pulse > 0 ? { animation: 'pulseGlow 1.8s ease-in-out infinite' } : undefined} />
-      <text x={600} y={400} fontSize="13" letterSpacing="3" fill={ACCENT} textAnchor="middle" fontWeight={600}>
+    <g style={{ opacity: show }}>
+      <circle cx={HUB.x} cy={HUB.y} r={160} fill="url(#hub)" opacity={0.45} />
+      <circle cx={HUB.x} cy={HUB.y} r={HUB.r} fill="oklch(18% 0.012 260)" stroke={ACCENT} strokeWidth={1.5} filter="url(#iStrong)" />
+      <circle
+        cx={HUB.x}
+        cy={HUB.y - 14}
+        r={11}
+        fill={ACCENT}
+        filter="url(#iStrong)"
+        style={pulse > 0 ? { animation: 'pulseGlow 1.8s ease-in-out infinite' } : undefined}
+      />
+      <text x={HUB.x} y={HUB.y + 16} fontSize="13" letterSpacing="3" fill={ACCENT} textAnchor="middle" fontWeight={600}>
         CONCIERGE
       </text>
-      <text x={600} y={416} fontSize="10" fill={SUBTLE} textAnchor="middle" letterSpacing="1.5">
+      <text x={HUB.x} y={HUB.y + 34} fontSize="10" fill={SUBTLE} textAnchor="middle" letterSpacing="1.5">
         coordinator · ADK
       </text>
     </g>
@@ -397,25 +424,54 @@ function ConciergeHub({ show, pulse }: { show: number; pulse: number }) {
 
 function SkillsLayer({ show, active }: { show: number; active: number }) {
   const skills = ['event-catalog', 'hospitality-tiers', 'travel-logistics', 'dietary-accessibility', 'human-in-the-loop']
-  // 5 pills × 190 wide + 4 × 14 gap = 1006; centred in 1200 → start at 97.
-  const W = 190
-  const GAP = 14
+  const W = 196
+  const GAP = 16
   const totalW = skills.length * W + (skills.length - 1) * GAP
   const startX = (1200 - totalW) / 2
-  const y = 180
+  const y = 100
   return (
     <g style={{ opacity: show }}>
+      <text x={600} y={78} fontSize="10" letterSpacing="2.4" fill={SUBTLE} textAnchor="middle" fontWeight={500}>
+        SKILLS · on-demand context
+      </text>
       {skills.map((s, i) => {
         const x = startX + i * (W + GAP)
         return (
           <g key={s} style={{ opacity: clamp(show - i * 0.12, 0, 1) }}>
-            <rect x={x} y={y} width={W} height={40} rx={20} fill="oklch(20% 0.012 260)" stroke={TRACE} strokeWidth={0.8} filter={active > 0 ? 'url(#iGlow)' : undefined} />
-            <circle cx={x + 16} cy={y + 20} r={3} fill={TRACE} />
-            <text x={x + W / 2 + 6} y={y + 25} fontSize="10.5" fill={TRACE} textAnchor="middle" fontFamily="Geist Mono, ui-monospace, monospace">
+            <rect
+              x={x}
+              y={y}
+              width={W}
+              height={40}
+              rx={20}
+              fill="oklch(20% 0.012 260)"
+              stroke={TRACE}
+              strokeWidth={0.8}
+              filter={active > 0 ? 'url(#iGlow)' : undefined}
+            />
+            <circle cx={x + 18} cy={y + 20} r={3} fill={TRACE} />
+            <text
+              x={x + W / 2 + 8}
+              y={y + 25}
+              fontSize="11"
+              fill={TRACE}
+              textAnchor="middle"
+              fontFamily="Geist Mono, ui-monospace, monospace"
+            >
               {s}
             </text>
-            {/* connector to hub */}
-            <line x1={x + W / 2} y1={y + 40} x2={600} y2={280} stroke={TRACE} strokeWidth={0.6} strokeDasharray="2 4" strokeOpacity={0.6} style={active > 0 ? { animation: `flowDashFast ${2.1 + i * 0.15}s linear infinite` } : undefined} />
+            {/* connector to hub top */}
+            <line
+              x1={x + W / 2}
+              y1={y + 40}
+              x2={HUB.x}
+              y2={HUB.y - HUB.r}
+              stroke={TRACE}
+              strokeWidth={0.6}
+              strokeDasharray="2 4"
+              strokeOpacity={0.55}
+              style={active > 0 ? { animation: `flowDashFast ${2.1 + i * 0.15}s linear infinite` } : undefined}
+            />
           </g>
         )
       })}
@@ -424,27 +480,23 @@ function SkillsLayer({ show, active }: { show: number; active: number }) {
 }
 
 function MemoryLayer({ show, active }: { show: number; active: number }) {
-  // Panel: x=890, y=380, width=260, height=200 → bottom 580, fits inside the stage.
-  const px = 890
-  const py = 380
-  const pw = 260
-  const ph = 200
+  const { x: px, y: py, w: pw, h: ph } = MEMORY_BOX
   const facts = [
-    { y: py + 74, text: 'vegan for guest 2', hit: true },
-    { y: py + 104, text: 'business-class before midnight', hit: false },
-    { y: py + 134, text: 'gluten-free for guest 5', hit: true },
-    { y: py + 164, text: 'prefers 2 adjoining suites', hit: false },
+    { y: py + 84, text: 'vegan for guest 2', hit: true },
+    { y: py + 114, text: 'business-class before midnight', hit: false },
+    { y: py + 144, text: 'gluten-free for guest 5', hit: true },
+    { y: py + 174, text: 'prefers 2 adjoining suites', hit: false },
   ]
   return (
     <g style={{ opacity: show }}>
       <rect x={px} y={py} width={pw} height={ph} rx={14} fill="oklch(16% 0.012 260)" stroke="oklch(32% 0.012 260)" strokeWidth={0.8} />
-      <text x={px + 20} y={py + 28} fontSize="10" letterSpacing="2.4" fill={SUBTLE} fontWeight={500}>
+      <text x={px + 20} y={py + 30} fontSize="10" letterSpacing="2.4" fill={SUBTLE} fontWeight={500}>
         LONG-TERM MEMORY
       </text>
-      <text x={px + 20} y={py + 48} fontSize="9" fill={SUBTLE} letterSpacing="1.2" fontFamily="Geist Mono, ui-monospace, monospace">
+      <text x={px + 20} y={py + 50} fontSize="9.5" fill={SUBTLE} letterSpacing="1.2" fontFamily="Geist Mono, ui-monospace, monospace">
         gemini-embedding-2
       </text>
-      <line x1={px + 20} y1={py + 60} x2={px + pw - 20} y2={py + 60} stroke="oklch(28% 0.01 260)" strokeWidth={0.5} />
+      <line x1={px + 20} y1={py + 64} x2={px + pw - 20} y2={py + 64} stroke="oklch(28% 0.01 260)" strokeWidth={0.5} />
       {facts.map((f, i) => (
         <g key={i} style={{ opacity: clamp(show - 0.1 * i, 0, 1) }}>
           <rect
@@ -458,7 +510,7 @@ function MemoryLayer({ show, active }: { show: number; active: number }) {
             strokeWidth={f.hit ? 1 : 0.5}
             filter={f.hit && active > 0 ? 'url(#iGlow)' : undefined}
           />
-          <text x={px + 26} y={f.y + 16} fontSize="10" fill={f.hit ? ACCENT : MUTED}>
+          <text x={px + 26} y={f.y + 16} fontSize="10.5" fill={f.hit ? ACCENT : MUTED}>
             {f.text}
           </text>
         </g>
@@ -467,7 +519,7 @@ function MemoryLayer({ show, active }: { show: number; active: number }) {
       {facts.filter((f) => f.hit).map((f, i) => (
         <path
           key={`arc-${i}`}
-          d={`M 680 340 C 780 340, 830 ${f.y + 12}, ${px + 4} ${f.y + 12}`}
+          d={`M ${HUB.x + HUB.r} ${HUB.y} C ${HUB.x + 160} ${HUB.y}, ${px - 40} ${f.y + 12}, ${px + 2} ${f.y + 12}`}
           stroke={ACCENT}
           strokeWidth={1.1}
           strokeDasharray="2 5"
@@ -482,51 +534,44 @@ function MemoryLayer({ show, active }: { show: number; active: number }) {
 }
 
 function SpecialistRing({ show, active, elapsed }: { show: number; active: number; elapsed: number }) {
-  const specs = [
-    { name: 'Researcher', angle: -150 },
-    { name: 'Logistics', angle: -115 },
-    { name: 'Experience', angle: -80 },
-    { name: 'Budget', angle: -45 },
-    { name: 'Personalizer', angle: -10 },
-  ]
-  const cx = 600
-  const cy = 360
-  const R = 290
+  // Horizontal row directly below the hub.
+  const specs = ['Researcher', 'Logistics', 'Experience', 'Budget', 'Personalizer']
   return (
     <g style={{ opacity: show }}>
-      {specs.map((s, i) => {
-        const rad = (s.angle * Math.PI) / 180
-        const x = cx + Math.cos(rad) * R
-        const y = cy + Math.sin(rad) * R
+      <text x={600} y={SPECIALIST_Y - 66} fontSize="10" letterSpacing="2.4" fill={SUBTLE} textAnchor="middle" fontWeight={500}>
+        SPECIALISTS · parallel dispatch via A2A
+      </text>
+      {specs.map((name, i) => {
+        const x = SPECIALIST_CENTRES[i]!
+        const y = SPECIALIST_Y
         const appear = clamp(show - i * 0.08, 0, 1)
         return (
-          <g key={s.name} style={{ opacity: appear }}>
-            {/* arrow coordinator → specialist */}
+          <g key={name} style={{ opacity: appear }}>
+            {/* arrow from hub bottom to specialist top */}
             <path
-              d={`M ${cx + Math.cos(rad) * 86} ${cy + Math.sin(rad) * 86} L ${x - Math.cos(rad) * 46} ${y - Math.sin(rad) * 46}`}
+              d={`M ${HUB.x} ${HUB.y + HUB.r} C ${HUB.x} ${HUB.y + HUB.r + 40}, ${x} ${y - SPECIALIST_R - 40}, ${x} ${y - SPECIALIST_R}`}
               stroke={ACCENT}
               strokeWidth={1.2}
               strokeDasharray="2 6"
               fill="none"
               opacity={active}
               filter="url(#iGlow)"
-              style={{ animation: `flowDashFast ${1.6 + i * 0.2}s linear infinite` }}
+              style={{ animation: `flowDashFast ${1.8 + i * 0.2}s linear infinite` }}
             />
-            {/* node */}
-            <circle cx={x} cy={y} r={44} fill="oklch(18% 0.012 260)" stroke={TRACE} strokeWidth={1} filter="url(#iGlow)" />
+            <circle cx={x} cy={y} r={SPECIALIST_R} fill="oklch(18% 0.012 260)" stroke={TRACE} strokeWidth={1} filter="url(#iGlow)" />
             <circle cx={x} cy={y} r={5} fill={TRACE} style={{ animation: `pulseGlow ${2 + i * 0.2}s ease-in-out infinite` }} />
-            <text x={x} y={y + 64} fontSize="11" fill={MUTED} textAnchor="middle" fontWeight={500}>
-              {s.name}
+            <text x={x} y={y + SPECIALIST_R + 18} fontSize="11" fill={MUTED} textAnchor="middle" fontWeight={500}>
+              {name}
             </text>
           </g>
         )
       })}
-      {/* between 19 and 23, show tool labels on specialists */}
+      {/* tool callouts during the tools act */}
       {elapsed > 18.5 && elapsed < 23 ? (
         <>
-          <ToolCallout x={cx + Math.cos((-115 * Math.PI) / 180) * R} y={cy + Math.sin((-115 * Math.PI) / 180) * R} text="hotels_near_event" />
-          <ToolCallout x={cx + Math.cos((-80 * Math.PI) / 180) * R} y={cy + Math.sin((-80 * Math.PI) / 180) * R} text="tiers_for_event" />
-          <ToolCallout x={cx + Math.cos((-150 * Math.PI) / 180) * R} y={cy + Math.sin((-150 * Math.PI) / 180) * R} text="search_events" />
+          <ToolCallout x={SPECIALIST_CENTRES[0]!} y={SPECIALIST_Y} text="search_events" />
+          <ToolCallout x={SPECIALIST_CENTRES[1]!} y={SPECIALIST_Y} text="hotels_near_event" />
+          <ToolCallout x={SPECIALIST_CENTRES[2]!} y={SPECIALIST_Y} text="tiers_for_event" />
         </>
       ) : null}
     </g>
@@ -534,36 +579,32 @@ function SpecialistRing({ show, active, elapsed }: { show: number; active: numbe
 }
 
 function ToolCallout({ x, y, text }: { x: number; y: number; text: string }) {
+  // Show above specialist node.
   return (
     <g>
-      <rect x={x - 70} y={y - 78} width={140} height={22} rx={11} fill={`color-mix(in oklab, ${ACCENT} 18%, transparent)`} stroke={ACCENT} strokeWidth={0.7} filter="url(#iGlow)" />
-      <text x={x} y={y - 63} fontSize="9.5" fill={ACCENT} textAnchor="middle" fontFamily="Geist Mono, ui-monospace, monospace">
+      <rect x={x - 80} y={y - SPECIALIST_R - 38} width={160} height={22} rx={11} fill={`color-mix(in oklab, ${ACCENT} 18%, transparent)`} stroke={ACCENT} strokeWidth={0.7} filter="url(#iGlow)" />
+      <text x={x} y={y - SPECIALIST_R - 23} fontSize="10" fill={ACCENT} textAnchor="middle" fontFamily="Geist Mono, ui-monospace, monospace">
         {text}
       </text>
     </g>
   )
 }
 
-function ToolOrbit({ show, active: _active, elapsed }: { show: number; active: number; elapsed: number }) {
-  // Orbit rings around the hub — tools listed as a decorative ring.
-  const t = elapsed * 0.3
+function ToolOrbit({ show, elapsed }: { show: number; active: number; elapsed: number }) {
+  // Decorative tool orbit around the hub.
+  const t = elapsed * 0.25
   const tools = ['search_events', 'hotels_near_event', 'find_flights', 'tiers_for_event', 'tier_detail', 'plan_arrangements']
-  const cx = 600
-  const cy = 360
-  const R = 132
+  const R = HUB.r + 36
   return (
-    <g style={{ opacity: show * 0.7 }}>
-      <circle cx={cx} cy={cy} r={R} fill="none" stroke="oklch(32% 0.012 260)" strokeWidth={0.4} strokeDasharray="2 6" />
+    <g style={{ opacity: show * 0.5 }}>
+      <circle cx={HUB.x} cy={HUB.y} r={R} fill="none" stroke="oklch(32% 0.012 260)" strokeWidth={0.4} strokeDasharray="2 6" />
       {tools.map((name, i) => {
         const a = (i * (360 / tools.length) + t * 60) * (Math.PI / 180)
-        const x = cx + Math.cos(a) * R
-        const y = cy + Math.sin(a) * R
+        const x = HUB.x + Math.cos(a) * R
+        const y = HUB.y + Math.sin(a) * R
         return (
           <g key={name}>
-            <circle cx={x} cy={y} r={3.5} fill={TRACE} opacity={0.8} />
-            <text x={x + 8} y={y + 3} fontSize="8.5" fill={SUBTLE} fontFamily="Geist Mono, ui-monospace, monospace" opacity={0.75}>
-              {name}
-            </text>
+            <circle cx={x} cy={y} r={3} fill={TRACE} opacity={0.8} />
           </g>
         )
       })}
@@ -572,72 +613,70 @@ function ToolOrbit({ show, active: _active, elapsed }: { show: number; active: n
 }
 
 function ResearchLoop({ show, elapsed }: { show: number; elapsed: number }) {
-  // Positioned in the clear band between the context-budget bar (≈y=286)
-  // and the user prompt box (y=520). Keeps the centre of the stage free
-  // for the coordinator and the specialist ring.
   const steps = ['plan', 'search', 'critique', 'refine']
-  const panelX = 40
-  const panelY = 320
-  const panelW = 360
-  const panelH = 170
-  const stepY = panelY + 70
+  const { x: px, y: py, w: pw, h: ph } = PANEL_L
+  const stepY = py + 64
   const t = Math.max(0, elapsed - 22.5)
   const activeIdx = Math.min(steps.length - 1, Math.floor(t / 0.9))
   return (
     <g style={{ opacity: show }}>
-      <rect x={panelX} y={panelY} width={panelW} height={panelH} rx={14} fill="oklch(17% 0.012 260)" stroke={TRACE} strokeWidth={0.8} filter="url(#iGlow)" />
-      <text x={panelX + 20} y={panelY + 24} fontSize="10" letterSpacing="2.2" fill={SUBTLE}>
+      <rect x={px} y={py} width={pw} height={ph} rx={14} fill="oklch(17% 0.012 260)" stroke={TRACE} strokeWidth={0.8} filter="url(#iGlow)" />
+      <text x={px + 20} y={py + 26} fontSize="10" letterSpacing="2.4" fill={SUBTLE} fontWeight={500}>
         DEEP RESEARCH · LoopAgent
       </text>
-      <text x={panelX + 20} y={panelY + 42} fontSize="9" fill={SUBTLE} letterSpacing="1.2">
-        agent workflow
-      </text>
+      <line x1={px + 20} y1={py + 40} x2={px + pw - 20} y2={py + 40} stroke="oklch(28% 0.01 260)" strokeWidth={0.5} />
       {steps.map((s, i) => {
-        const x = panelX + 26 + i * 82
+        const stepW = 70
+        const gap = 8
+        const totalW = steps.length * stepW + (steps.length - 1) * gap
+        const startX = px + (pw - totalW) / 2
+        const x = startX + i * (stepW + gap)
         const on = i <= activeIdx
         return (
           <g key={s}>
-            <rect x={x} y={stepY - 12} width={72} height={28} rx={14} fill={on ? `color-mix(in oklab, ${ACCENT} 20%, transparent)` : 'transparent'} stroke={on ? ACCENT : 'oklch(34% 0.01 260)'} strokeWidth={on ? 1 : 0.6} filter={on ? 'url(#iGlow)' : undefined} />
-            <text x={x + 36} y={stepY + 5} fontSize="10" fill={on ? ACCENT : MUTED} textAnchor="middle" fontWeight={on ? 500 : 400}>
+            <rect x={x} y={stepY - 12} width={stepW} height={26} rx={13} fill={on ? `color-mix(in oklab, ${ACCENT} 20%, transparent)` : 'transparent'} stroke={on ? ACCENT : 'oklch(34% 0.01 260)'} strokeWidth={on ? 1 : 0.6} filter={on ? 'url(#iGlow)' : undefined} />
+            <text x={x + stepW / 2} y={stepY + 4} fontSize="10" fill={on ? ACCENT : MUTED} textAnchor="middle" fontWeight={on ? 500 : 400}>
               {s}
             </text>
-            {i < steps.length - 1 ? (
-              <path d={`M ${x + 74} ${stepY + 2} L ${x + 82} ${stepY + 2}`} stroke={on ? ACCENT : 'oklch(34% 0.01 260)'} strokeWidth={1} markerEnd="url(#iAr)" />
-            ) : null}
           </g>
         )
       })}
-      <line x1={panelX + 20} y1={stepY + 36} x2={panelX + panelW - 20} y2={stepY + 36} stroke="oklch(28% 0.01 260)" strokeWidth={0.5} />
-      <text x={panelX + 20} y={stepY + 58} fontSize="10" fill={SUBTLE} fontFamily="Geist Mono, ui-monospace, monospace">
+      <text x={px + 20} y={py + ph - 18} fontSize="9.5" fill={SUBTLE} fontFamily="Geist Mono, ui-monospace, monospace">
         research_scratchpad · 4 sub-questions
-      </text>
-      <text x={panelX + 20} y={stepY + 74} fontSize="9" fill={SUBTLE} fontFamily="Geist Mono, ui-monospace, monospace" opacity={0.7}>
-        findings · citations · coverage check
       </text>
     </g>
   )
 }
 
 function ArtifactStream({ show, elapsed }: { show: number; elapsed: number }) {
-  const items = [
-    { kind: 'itinerary', x: 940, y: 160 },
-    { kind: 'option_card_grid', x: 940, y: 240 },
-    { kind: 'option_card_grid', x: 940, y: 320 },
-    { kind: 'pricing_breakdown', x: 940, y: 400 },
-  ]
+  // Right panel — four mini-card tiles arranged in a 2×2 grid.
+  const { x: px, y: py, w: pw, h: ph } = PANEL_R
+  const items = ['itinerary', 'option_card_grid', 'option_card_grid', 'pricing_breakdown']
+  const cardW = 154
+  const cardH = 42
+  const gapX = 12
+  const gapY = 10
   return (
     <g style={{ opacity: show }}>
-      {items.map((it, i) => {
+      <rect x={px} y={py} width={pw} height={ph} rx={14} fill="oklch(17% 0.012 260)" stroke="oklch(32% 0.012 260)" strokeWidth={0.8} />
+      <text x={px + 20} y={py + 26} fontSize="10" letterSpacing="2.4" fill={SUBTLE} fontWeight={500}>
+        A2UI ARTIFACTS · typed components
+      </text>
+      <line x1={px + 20} y1={py + 40} x2={px + pw - 20} y2={py + 40} stroke="oklch(28% 0.01 260)" strokeWidth={0.5} />
+      {items.map((kind, i) => {
+        const col = i % 2
+        const row = Math.floor(i / 2)
+        const x = px + 20 + col * (cardW + gapX)
+        const y = py + 52 + row * (cardH + gapY)
         const t = clamp((elapsed - (26.5 + i * 0.4)) / 0.9, 0, 1)
         return (
           <g key={i} style={{ opacity: t }}>
-            <rect x={it.x} y={it.y} width={200} height={64} rx={10} fill="oklch(20% 0.012 260)" stroke={ACCENT} strokeWidth={0.8} filter="url(#iGlow)" />
-            <rect x={it.x + 14} y={it.y + 14} width={140} height={6} rx={2} fill={ACCENT} opacity={0.7} />
-            <rect x={it.x + 14} y={it.y + 28} width={100} height={4} rx={2} fill={MUTED} opacity={0.4} />
-            <rect x={it.x + 14} y={it.y + 38} width={120} height={4} rx={2} fill={MUTED} opacity={0.4} />
-            <rect x={it.x + 14} y={it.y + 48} width={80} height={4} rx={2} fill={MUTED} opacity={0.4} />
-            <text x={it.x + 190} y={it.y + 58} fontSize="7.5" fill={SUBTLE} textAnchor="end" fontFamily="Geist Mono, ui-monospace, monospace">
-              {it.kind}
+            <rect x={x} y={y} width={cardW} height={cardH} rx={8} fill="oklch(20% 0.012 260)" stroke={ACCENT} strokeWidth={0.8} filter="url(#iGlow)" />
+            <rect x={x + 10} y={y + 10} width={90} height={5} rx={2} fill={ACCENT} opacity={0.7} />
+            <rect x={x + 10} y={y + 22} width={70} height={3} rx={2} fill={MUTED} opacity={0.4} />
+            <rect x={x + 10} y={y + 30} width={50} height={3} rx={2} fill={MUTED} opacity={0.4} />
+            <text x={x + cardW - 8} y={y + cardH - 8} fontSize="7" fill={SUBTLE} textAnchor="end" fontFamily="Geist Mono, ui-monospace, monospace">
+              {kind}
             </text>
           </g>
         )
@@ -647,31 +686,32 @@ function ArtifactStream({ show, elapsed }: { show: number; elapsed: number }) {
 }
 
 function HitlGate({ show, elapsed }: { show: number; elapsed: number }) {
+  const { x: px, y: py, w: pw, h: ph } = PANEL_C
   const approved = elapsed > 33.5
   return (
     <g style={{ opacity: show }}>
-      <rect x={440} y={540} width={320} height={120} rx={14} fill="oklch(18% 0.012 260)" stroke={ACCENT} strokeWidth={1.3} filter="url(#iStrong)" />
-      <rect x={440} y={540} width={320} height={2} fill={ACCENT} opacity={0.8} filter="url(#iGlow)" />
-      <text x={460} y={564} fontSize="9" fill={SUBTLE} letterSpacing="2">
+      <rect x={px} y={py} width={pw} height={ph} rx={14} fill="oklch(18% 0.012 260)" stroke={ACCENT} strokeWidth={1.3} filter="url(#iStrong)" />
+      <rect x={px} y={py} width={pw} height={2} fill={ACCENT} opacity={0.8} filter="url(#iGlow)" />
+      <text x={px + 20} y={py + 26} fontSize="10" fill={SUBTLE} letterSpacing="2.2">
         A2UI · approval_request
       </text>
-      <text x={460} y={586} fontSize="13" fill={WHITE} fontWeight={600}>
+      <text x={px + 20} y={py + 52} fontSize="14" fill={WHITE} fontWeight={600}>
         Confirm arrangement
       </text>
-      <text x={460} y={604} fontSize="10" fill={MUTED}>
+      <text x={px + 20} y={py + 70} fontSize="10.5" fill={MUTED}>
         Wimbledon 2026 · family of six · ₹58L total
       </text>
-      <rect x={460} y={618} width={100} height={26} rx={6} fill="oklch(22% 0.012 260)" stroke="oklch(34% 0.01 260)" />
-      <text x={510} y={636} fontSize="10" fill={MUTED} textAnchor="middle">
+      <rect x={px + 20} y={py + 86} width={90} height={28} rx={6} fill="oklch(22% 0.012 260)" stroke="oklch(34% 0.01 260)" />
+      <text x={px + 65} y={py + 105} fontSize="10.5" fill={MUTED} textAnchor="middle">
         Not yet
       </text>
-      <rect x={570} y={618} width={170} height={26} rx={6} fill={approved ? 'oklch(72% 0.11 160)' : ACCENT} filter="url(#iGlow)" />
-      <text x={655} y={636} fontSize="10.5" fill="oklch(12% 0 0)" textAnchor="middle" fontWeight={600}>
+      <rect x={px + 120} y={py + 86} width={220} height={28} rx={6} fill={approved ? 'oklch(72% 0.11 160)' : ACCENT} filter="url(#iGlow)" />
+      <text x={px + 230} y={py + 105} fontSize="11" fill="oklch(12% 0 0)" textAnchor="middle" fontWeight={600}>
         {approved ? 'Approved' : 'Approve and proceed'}
       </text>
       {elapsed > 32.5 && elapsed < 34 ? (
-        <circle cx={655} cy={631} r={18} fill="none" stroke={ACCENT} strokeWidth={1.2} opacity={0.5}>
-          <animate attributeName="r" from="10" to="32" dur="0.8s" fill="freeze" />
+        <circle cx={px + 230} cy={py + 100} r={18} fill="none" stroke={ACCENT} strokeWidth={1.2} opacity={0.5}>
+          <animate attributeName="r" from="10" to="34" dur="0.8s" fill="freeze" />
           <animate attributeName="opacity" from="0.8" to="0" dur="0.8s" fill="freeze" />
         </circle>
       ) : null}
@@ -681,26 +721,31 @@ function HitlGate({ show, elapsed }: { show: number; elapsed: number }) {
 
 function ContextCompact({ show, elapsed }: { show: number; elapsed: number }) {
   const t = clamp((elapsed - 34.5) / 2, 0, 1)
+  const { x: px, y: py, w: pw, h: ph } = PANEL_C
+  const barY = py + 64
+  const barX = px + 20
+  const barW = pw - 40
   return (
     <g style={{ opacity: show }}>
-      <text x={60} y={260} fontSize="10" letterSpacing="2" fill={SUBTLE}>
-        CONTEXT BUDGET
+      <rect x={px} y={py} width={pw} height={ph} rx={14} fill="oklch(17% 0.012 260)" stroke={TRACE} strokeWidth={0.8} filter="url(#iGlow)" />
+      <text x={px + 20} y={py + 26} fontSize="10" letterSpacing="2.4" fill={SUBTLE} fontWeight={500}>
+        CONTEXT BUDGET · compaction
       </text>
-      <rect x={60} y={272} width={360} height={14} rx={3} fill="oklch(20% 0.012 260)" stroke="oklch(30% 0.01 260)" />
-      {/* 11 small bars collapsing into 1 summary */}
+      <line x1={px + 20} y1={py + 40} x2={px + pw - 20} y2={py + 40} stroke="oklch(28% 0.01 260)" strokeWidth={0.5} />
+      <rect x={barX} y={barY} width={barW} height={16} rx={4} fill="oklch(20% 0.012 260)" stroke="oklch(30% 0.01 260)" strokeWidth={0.5} />
       {Array.from({ length: 11 }).map((_, i) => {
-        const bw = 20
+        const bw = (barW / 12)
         const gap = 1
-        const fromX = 62 + i * (bw + gap)
-        const toX = 62
+        const fromX = barX + 2 + i * (bw + gap)
+        const toX = barX + 2
         const x = fromX + (toX - fromX) * t
-        const w = bw + (44 - bw) * (i === 0 ? t : 0) // bar 0 becomes summary
+        const w = bw + (bw * 1.6 - bw) * (i === 0 ? t : 0)
         const opacity = i === 0 ? 1 : 1 - t
         return (
           <rect
             key={i}
             x={x}
-            y={273}
+            y={barY + 2}
             width={Math.max(2, w)}
             height={12}
             rx={1}
@@ -710,8 +755,11 @@ function ContextCompact({ show, elapsed }: { show: number; elapsed: number }) {
           />
         )
       })}
-      <text x={440} y={284} fontSize="10" fill={TRACE} fontFamily="Geist Mono, ui-monospace, monospace" style={{ opacity: t }}>
+      <text x={px + 20} y={py + ph - 22} fontSize="10.5" fill={TRACE} fontFamily="Geist Mono, ui-monospace, monospace" style={{ opacity: t }}>
         context · compact (−120k tokens)
+      </text>
+      <text x={px + pw - 20} y={py + ph - 22} fontSize="9.5" fill={SUBTLE} fontFamily="Geist Mono, ui-monospace, monospace" textAnchor="end" style={{ opacity: t }}>
+        live window kept lean
       </text>
     </g>
   )
@@ -719,36 +767,26 @@ function ContextCompact({ show, elapsed }: { show: number; elapsed: number }) {
 
 function Dossier({ show, elapsed }: { show: number; elapsed: number }) {
   const t = clamp((elapsed - 37.5) / 1.5, 0, 1)
+  // Replaces the centre panel when the final act arrives.
+  const { x: px, y: py, w: pw, h: ph } = PANEL_C
   return (
     <g style={{ opacity: show * t }}>
-      <rect x={440} y={300} width={320} height={160} rx={14} fill="oklch(20% 0.012 260)" stroke={ACCENT} strokeWidth={1.4} filter="url(#iStrong)" />
-      <rect x={440} y={300} width={320} height={2} fill={ACCENT} filter="url(#iGlow)" />
-      <text x={460} y={324} fontSize="9" fill={SUBTLE} letterSpacing="2.2">
+      <rect x={px} y={py} width={pw} height={ph} rx={14} fill="oklch(20% 0.012 260)" stroke={ACCENT} strokeWidth={1.4} filter="url(#iStrong)" />
+      <rect x={px} y={py} width={pw} height={2} fill={ACCENT} filter="url(#iGlow)" />
+      <text x={px + 20} y={py + 26} fontSize="10" fill={SUBTLE} letterSpacing="2.4" fontWeight={500}>
         DOSSIER · DELIVERED
       </text>
-      <text x={460} y={350} fontSize="18" fill={WHITE} fontWeight={600} className="display">
+      <line x1={px + 20} y1={py + 40} x2={px + pw - 20} y2={py + 40} stroke="oklch(28% 0.01 260)" strokeWidth={0.5} />
+      <text x={px + 20} y={py + 64} fontSize="16" fill={WHITE} fontWeight={600}>
         Wimbledon · July 2026
       </text>
-      <text x={460} y={372} fontSize="11" fill={MUTED}>
+      <text x={px + 20} y={py + 82} fontSize="10.5" fill={MUTED}>
         The Connaught · No.1 Court & Centre Court
       </text>
-      <rect x={460} y={390} width={280} height={1} fill="oklch(30% 0.01 260)" />
-      <text x={460} y={410} fontSize="10" fill={SUBTLE}>
-        GUESTS
+      <text x={px + 20} y={py + ph - 26} fontSize="9.5" fill={SUBTLE} letterSpacing="1.2">
+        6 GUESTS · 5 NIGHTS
       </text>
-      <text x={740} y={410} fontSize="11" fill={MUTED} textAnchor="end" fontFamily="Geist Mono, ui-monospace, monospace">
-        6
-      </text>
-      <text x={460} y={428} fontSize="10" fill={SUBTLE}>
-        NIGHTS
-      </text>
-      <text x={740} y={428} fontSize="11" fill={MUTED} textAnchor="end" fontFamily="Geist Mono, ui-monospace, monospace">
-        5
-      </text>
-      <text x={460} y={446} fontSize="10" fill={SUBTLE}>
-        TOTAL
-      </text>
-      <text x={740} y={446} fontSize="14" fill={ACCENT} textAnchor="end" fontFamily="Geist Mono, ui-monospace, monospace" fontWeight={600}>
+      <text x={px + pw - 20} y={py + ph - 22} fontSize="14" fill={ACCENT} textAnchor="end" fontFamily="Geist Mono, ui-monospace, monospace" fontWeight={600}>
         ₹58.42 L
       </text>
     </g>
@@ -759,8 +797,20 @@ function Credits({ show }: { show: number }) {
   const creds = ['ADK', 'A2A', 'A2UI', 'gemini-3-flash', 'gemini-embedding-2', 'LoopAgent', 'HitlBus']
   return (
     <g style={{ opacity: show * 0.9 }}>
+      <text x={600} y={696} fontSize="10" letterSpacing="2.4" fill={SUBTLE} textAnchor="middle" fontWeight={500}>
+        POWERED BY GOOGLE AI
+      </text>
       {creds.map((c, i) => (
-        <text key={c} x={600 + (i - (creds.length - 1) / 2) * 110} y={690} fontSize="10.5" fill={SUBTLE} textAnchor="middle" letterSpacing="1.5" fontFamily="Geist Mono, ui-monospace, monospace">
+        <text
+          key={c}
+          x={600 + (i - (creds.length - 1) / 2) * 120}
+          y={714}
+          fontSize="9.5"
+          fill={SUBTLE}
+          textAnchor="middle"
+          fontFamily="Geist Mono, ui-monospace, monospace"
+          opacity={0.7}
+        >
           {c}
         </text>
       ))}
