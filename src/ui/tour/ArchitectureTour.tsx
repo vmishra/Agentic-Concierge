@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { AnimatePresence, motion } from 'motion/react'
-import { X, ArrowLeft, ArrowRight, Workflow, Plus, Minus } from 'lucide-react'
+import { X, ArrowLeft, ArrowRight, Workflow, Plus, Minus, PlayCircle } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { spring } from '../motion/presets'
+import { ImmersiveFlow } from './ImmersiveFlow'
 import {
   OvertureDiagram,
   SkillsDiagram,
@@ -284,6 +285,7 @@ export function ArchitectureTourButton() {
 function ArchitectureTour({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const [idx, setIdx] = useState(0)
   const [expanded, setExpanded] = useState(false)
+  const [immersive, setImmersive] = useState(false)
   const list = slides()
   const slide = list[idx]!
   const next = useCallback(() => setIdx((i) => Math.min(list.length - 1, i + 1)), [list.length])
@@ -326,15 +328,31 @@ function ArchitectureTour({ open, onOpenChange }: { open: boolean; onOpenChange:
               <Dialog.Title className="display text-[17px] font-medium">Under the hood</Dialog.Title>
               <span className="text-[11px] text-subtle hidden md:inline">a tour of the multi-agent machine behind the concierge</span>
             </div>
-            <Dialog.Close asChild>
+            <div className="flex items-center gap-2">
               <button
-                aria-label="Close tour"
-                className="size-8 rounded-md text-muted hover:text-text hover:bg-elev-2 flex items-center justify-center"
+                type="button"
+                onClick={() => setImmersive(true)}
+                className={cn(
+                  'h-8 pl-2 pr-3 rounded-full border inline-flex items-center gap-1.5 text-[11.5px] font-medium transition-colors',
+                  'bg-[color:var(--accent-soft)] border-[color:var(--accent-soft)] text-[color:var(--accent)]',
+                  'hover:brightness-110',
+                )}
+                title="Play the whole flow as one immersive animation"
               >
-                <X className="size-4" strokeWidth={1.5} />
+                <PlayCircle className="size-4" strokeWidth={1.5} />
+                <span>play the full flow</span>
               </button>
-            </Dialog.Close>
+              <Dialog.Close asChild>
+                <button
+                  aria-label="Close tour"
+                  className="size-8 rounded-md text-muted hover:text-text hover:bg-elev-2 flex items-center justify-center"
+                >
+                  <X className="size-4" strokeWidth={1.5} />
+                </button>
+              </Dialog.Close>
+            </div>
           </header>
+          <ImmersiveFlow open={immersive} onOpenChange={setImmersive} />
 
           <div className="min-h-0 flex-1 overflow-y-auto">
             <AnimatePresence mode="wait">
