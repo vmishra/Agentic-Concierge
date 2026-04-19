@@ -378,6 +378,33 @@ const budgetBeat: Beat = {
   },
 }
 
+// "What's the total?" — Wimbledon baseline total = No.1 Court (12 × ₹2.2L) +
+// Connaught (10 × ₹1.18L) + flights (₹2.35L × 12) + cultural/transfers (₹3.6L)
+// = ₹70.00 L.
+const wimTotal: Beat = {
+  id: 'concierge.wim.total',
+  match: (input) =>
+    !isPostTool(input) &&
+    isScenario(input, 'wim') &&
+    matchUser(
+      input,
+      /(what.*?(is|\'s).*?(total|cost|price|bill|number))|how much|\btotal\b\s*\??$|\bcost\b\s*\??$|ballpark|running total|within budget|fit.*?budget/i,
+    ),
+  steps: () => [
+    {
+      kind: 'say',
+      text:
+        'As the arrangement stands — No.1 Court hospitality for the six of you across two days, The Connaught with adjoining family suites for five nights, business-class return for the group, and the V&A morning with private transfers — the baseline is ₹70 L.',
+      gapMs: 120,
+    },
+    {
+      kind: 'say',
+      text:
+        'Moving the adults to Centre Court debenture for the middle Monday adds about ₹11 L across the group. Trimming the cultural day saves ~₹5.5 L if you prefer a quieter fortnight.',
+    },
+  ],
+}
+
 // Catch-all refinement for the Wimbledon thread — chip labels like "Closer to
 // the grounds", "Compare these three", "Debenture", "Quieter hotel".
 const wimRefine: Beat = {
@@ -425,7 +452,7 @@ void openers
 export const wimbledonScript: ScenarioScript = {
   name: 'wimbledon',
   beats: {
-    Concierge: [closer, closerPost, dossier, wimRefine, wimRefinePost, intro, assemble],
+    Concierge: [wimTotal, closer, closerPost, dossier, wimRefine, wimRefinePost, intro, assemble],
     Researcher: [researchPre, researchPost],
     Logistics: [logisticsPre, logisticsPost],
     Experience: [experiencePre, experiencePost],

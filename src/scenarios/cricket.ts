@@ -337,6 +337,32 @@ const budgetBeat: Beat = {
   },
 }
 
+// "What's the total?" — Cricket baseline total = Corporate Box (20 × ₹92k)
+// + Taj (10 × ₹54k) + dinners/transfers (₹2.8L) = ₹26.60 L.
+const crTotal: Beat = {
+  id: 'concierge.cr.total',
+  match: (input) =>
+    !isPostTool(input) &&
+    isScenario(input, 'cr') &&
+    matchUser(
+      input,
+      /(what.*?(is|\'s).*?(total|cost|price|bill|number))|how much|\btotal\b\s*\??$|\bcost\b\s*\??$|ballpark|running total|within budget|fit.*?budget/i,
+    ),
+  steps: () => [
+    {
+      kind: 'say',
+      text:
+        'As the arrangement stands — Corporate Box at the Garware End for the group of ten across two days, Taj Mahal Palace corporate floor with five rooms for two nights, welcome dinner at the Sea Lounge, and transfers with a dedicated host — the baseline is ₹26.6 L.',
+      gapMs: 120,
+    },
+    {
+      kind: 'say',
+      text:
+        'Splitting across the Club House Pavilion trims roughly ₹8.8 L; keeping the ten of you together in the Corporate Box is the default.',
+    },
+  ],
+}
+
 const crRefine: Beat = {
   id: 'concierge.cr.refine-generic',
   match: (input) =>
@@ -380,7 +406,7 @@ void openers
 export const cricketScript: ScenarioScript = {
   name: 'cricket',
   beats: {
-    Concierge: [insiderIntent, insiderPost, weather, dossier, crRefine, crRefinePost, intro, assemble],
+    Concierge: [crTotal, insiderIntent, insiderPost, weather, dossier, crRefine, crRefinePost, intro, assemble],
     Researcher: [researchPre, researchPost],
     Logistics: [logisticsPre, logisticsPost],
     Experience: [experiencePre, experiencePost],

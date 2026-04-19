@@ -270,6 +270,33 @@ const conciergeGiftPost: Beat = {
   steps: () => [{ kind: 'say', text: 'Framing is in the workspace. If it plays well with the recipient, I can fold in a brief, unannounced grid walk on the Saturday — a small surprise inside the larger one.' }],
 }
 
+// "What's the total?" — quote the same number as the pricing_breakdown.
+// F1 baseline total = Trophy (4 × ₹4.25L) + Waldorf (3 × ₹95k) + flights
+// (72k × 4 × 2) + transfers (₹1.8L) = ₹27.41 L.
+const conciergeTotal: Beat = {
+  id: 'concierge.f1.total',
+  match: (input) =>
+    !isPostTool(input) &&
+    isScenario(input, 'f1') &&
+    matchUser(
+      input,
+      /(what.*?(is|\'s).*?(total|cost|price|bill|number))|how much|\btotal\b\s*\??$|\bcost\b\s*\??$|ballpark|running total|within budget|fit.*?budget/i,
+    ),
+  steps: () => [
+    {
+      kind: 'say',
+      text:
+        'As the arrangement stands — Trophy hospitality for the four of you across the three days, Waldorf Astoria with step-free suites, business-class return from Mumbai, accessible transfers throughout — the baseline is ₹27.41 L.',
+      gapMs: 120,
+    },
+    {
+      kind: 'say',
+      text:
+        'Moving two guests into Paddock Club adds roughly ₹14.5 L; an Emirates Palace upgrade adds ~₹2.1 L. Still comfortably inside the ₹50 L cap.',
+    },
+  ],
+}
+
 // A catch-all for common refinement chips so the conversation stays in-flow
 // even when the user clicks a short label rather than typing a sentence.
 // Gated on isScenario(f1) so it never fires in a Wimbledon or Cricket thread.
@@ -801,6 +828,7 @@ export const f1AbuDhabiScript: ScenarioScript = {
   name: 'f1-abu-dhabi',
   beats: {
     Concierge: [
+      conciergeTotal,
       conciergeCloser,
       conciergePitlanePost,
       conciergeResearchInsider,
