@@ -29,3 +29,6 @@ dist-ssr
 # app.sh runtime
 .app.pid
 .app.log
+
+# Puppeteer cache (large; only the captured PNGs are committed)
+.cache/puppeteer
