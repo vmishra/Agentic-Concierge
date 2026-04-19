@@ -11,7 +11,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { AnimatePresence, motion } from 'motion/react'
-import { HeartHandshake, Pause, Play, RotateCcw, X, Wifi, Signal, BatteryMedium } from 'lucide-react'
+import {
+  HeartHandshake,
+  Pause,
+  Play,
+  RotateCcw,
+  X,
+  Wifi,
+  Signal,
+  BatteryMedium,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react'
+import { cn } from '@/lib/cn'
 
 // -----------------------------------------------------------------------------
 // Beats — twelve moments across the post-sales journey
@@ -266,6 +278,37 @@ function HyperCare({ open, onOpenChange }: { open: boolean; onOpenChange: (v: bo
     setRunId((r) => r + 1)
   }
 
+  const jumpToBeat = (i: number) => {
+    const clamped = Math.max(0, Math.min(BEATS.length - 1, i))
+    setElapsed(clamped * BEAT_DURATION + 0.1)
+    setPlaying(false)
+  }
+  const prev = () => jumpToBeat(beatIdx - 1)
+  const next = () => jumpToBeat(beatIdx + 1)
+
+  // Keyboard shortcuts while the dialog is open.
+  useEffect(() => {
+    if (!open) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        next()
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        prev()
+      } else if (e.key === ' ') {
+        e.preventDefault()
+        setPlaying((p) => !p)
+      } else if (e.key.toLowerCase() === 'r') {
+        e.preventDefault()
+        restart()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, beatIdx])
+
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
@@ -294,24 +337,66 @@ function HyperCare({ open, onOpenChange }: { open: boolean; onOpenChange: (v: bo
               </span>
             </div>
             <div className="flex items-center gap-2">
+              {/* Step controls — grouped */}
+              <div className="flex items-center rounded-full bg-elev-1 border border-[color:var(--border)] overflow-hidden">
+                <button
+                  type="button"
+                  onClick={prev}
+                  disabled={beatIdx === 0}
+                  className="h-9 px-2.5 flex items-center gap-1 text-muted hover:text-text hover:bg-elev-2 disabled:opacity-30 disabled:pointer-events-none transition-colors text-[11.5px] font-medium"
+                  title="Previous moment (←)"
+                >
+                  <ChevronLeft className="size-3.5" strokeWidth={1.8} />
+                  <span className="hidden md:inline">prev</span>
+                </button>
+                <span className="w-px h-5 bg-[color:var(--border)]" aria-hidden />
+                <button
+                  type="button"
+                  onClick={next}
+                  disabled={beatIdx === BEATS.length - 1}
+                  className="h-9 px-2.5 flex items-center gap-1 text-[color:var(--accent)] hover:bg-[color:var(--accent-soft)] disabled:opacity-30 disabled:pointer-events-none transition-colors text-[11.5px] font-medium"
+                  title="Next moment (→)"
+                >
+                  <span className="hidden md:inline">next</span>
+                  <ChevronRight className="size-3.5" strokeWidth={1.8} />
+                </button>
+              </div>
+
+              {/* Auto-play toggle */}
               <button
                 type="button"
                 onClick={() => setPlaying((p) => !p)}
-                className="size-9 rounded-full flex items-center justify-center bg-elev-1 border border-[color:var(--border)] text-muted hover:text-text hover:border-[color:var(--border-strong)]"
-                title={playing ? 'Pause' : 'Play'}
+                className={cn(
+                  'h-9 pl-2.5 pr-3 rounded-full border inline-flex items-center gap-1.5 text-[11.5px] font-medium transition-colors',
+                  playing
+                    ? 'bg-[color:var(--accent-soft)] border-[color:var(--accent-soft)] text-[color:var(--accent)]'
+                    : 'bg-elev-1 border-[color:var(--border)] text-muted hover:text-text hover:border-[color:var(--border-strong)]',
+                )}
+                title={playing ? 'Pause auto-play (space)' : 'Play the whole thing (space)'}
               >
-                {playing ? <Pause className="size-3.5" strokeWidth={1.8} /> : <Play className="size-3.5" strokeWidth={1.8} />}
+                {playing ? (
+                  <>
+                    <Pause className="size-3.5" strokeWidth={1.8} />
+                    <span>playing</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="size-3.5" strokeWidth={1.8} />
+                    <span>play all</span>
+                  </>
+                )}
               </button>
+
               <button
                 type="button"
                 onClick={restart}
                 className="size-9 rounded-full flex items-center justify-center bg-elev-1 border border-[color:var(--border)] text-muted hover:text-text hover:border-[color:var(--border-strong)]"
-                title="Restart"
+                title="Restart (r)"
               >
                 <RotateCcw className="size-3.5" strokeWidth={1.8} />
               </button>
               <Dialog.Close asChild>
-                <button className="size-9 rounded-full flex items-center justify-center bg-elev-1 border border-[color:var(--border)] text-muted hover:text-text">
+                <button className="size-9 rounded-full flex items-center justify-center bg-elev-1 border border-[color:var(--border)] text-muted hover:text-text" title="Close">
                   <X className="size-3.5" strokeWidth={1.8} />
                 </button>
               </Dialog.Close>
