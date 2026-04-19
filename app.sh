@@ -28,7 +28,26 @@ dim()  { printf "%b%s%b\n" "$c_dim" "$1" "$c_reset"; }
 ensure_node() {
   if ! command -v node >/dev/null 2>&1; then
     warn "node not found on PATH"
-    dim "  install Node 20+ (https://nodejs.org) or run:  brew install node"
+    case "$(uname -s)" in
+      Darwin*) dim "  install with Homebrew:   brew install node" ;;
+      Linux*)  dim "  install with nvm:        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash && nvm install 20" ;;
+      *)       dim "  download Node 20+ from https://nodejs.org" ;;
+    esac
+    dim "  then re-run:             ./app.sh start"
+    exit 1
+  fi
+
+  # Require Node 20+.
+  local major
+  major="$(node -p 'parseInt(process.versions.node.split(".")[0], 10)' 2>/dev/null || echo 0)"
+  if [ "$major" -lt 20 ] 2>/dev/null; then
+    warn "node $(node --version) is too old — Node 20+ is required"
+    dim "  upgrade and re-run ./app.sh start"
+    exit 1
+  fi
+
+  if ! command -v npm >/dev/null 2>&1; then
+    warn "npm not found on PATH (should ship with Node)"
     exit 1
   fi
 }
@@ -47,8 +66,18 @@ start() {
     exit 0
   fi
 
+  # First run: install dependencies. Also re-install if package.json is
+  # newer than node_modules (common when pulling changes that updated deps).
+  local needs_install=0
   if [ ! -d "$ROOT/node_modules" ]; then
-    say "→ installing dependencies (first run)"
+    needs_install=1
+  elif [ "$ROOT/package-lock.json" -nt "$ROOT/node_modules" ] 2>/dev/null; then
+    needs_install=1
+  elif [ "$ROOT/package.json" -nt "$ROOT/node_modules" ] 2>/dev/null; then
+    needs_install=1
+  fi
+  if [ "$needs_install" = 1 ]; then
+    say "→ installing dependencies"
     (cd "$ROOT" && npm install)
   fi
 

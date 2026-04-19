@@ -26,13 +26,21 @@ It is a **reference prototype**. Not a product. Not an SDK. A code sample you ca
 
 ## 60 seconds
 
+**Prerequisite:** Node 20+ (the only one).
+
 ```sh
 git clone https://github.com/vmishra/Agentic-Concierge
 cd Agentic-Concierge
 ./app.sh start
 ```
 
-That is the whole story. The script checks for Node, installs dependencies on first run, starts Vite, waits until the server is ready, and prints the URL. Use `./app.sh stop` to shut it down, `./app.sh logs` to tail, `./app.sh restart` for the obvious.
+That is the whole story. The script checks for Node, runs `npm install` on first run (and on `git pull`s that changed dependencies), starts Vite, waits until the server is ready, and prints the URL. Use `./app.sh stop` to shut it down, `./app.sh logs` to tail, `./app.sh restart` for the obvious.
+
+No Node on the machine yet?
+
+- **macOS**: `brew install node`
+- **Linux**: use `nvm` — `curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash && nvm install 20`
+- **Windows**: download the LTS from https://nodejs.org
 
 Default mode is **Mock** — deterministic, no network, no keys. Pick any of the three seeded prompts on the empty state and the scenario plays out in front of you.
 
