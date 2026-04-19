@@ -30,6 +30,9 @@ import {
   Users,
   Megaphone,
   Sparkles,
+  Globe,
+  Search,
+  CornerDownLeft,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import {
@@ -44,11 +47,14 @@ import {
   categoryOrder,
   aiReads,
   anomalies,
+  cityCoords,
+  provenanceFeed,
   type EventRow,
   type Action,
   type Persona,
   type AIRead,
   type Anomaly,
+  type Category,
 } from './behindData'
 
 // -----------------------------------------------------------------------------
@@ -112,8 +118,9 @@ interface Section {
 
 const SECTIONS: Section[] = [
   { id: 'board', aiSection: 'board', label: 'Annual planning board', sub: '2026 · all categories', icon: LayoutDashboard, body: AnnualBoard },
+  { id: 'world', aiSection: 'pulse', label: 'Global reach', sub: 'world map · demand by venue', icon: Globe, body: WorldReach },
   { id: 'drill', aiSection: 'drill', label: 'Category drill · Tennis', sub: 'leagues · signals · recommendation', icon: Trophy, body: CategoryDrill },
-  { id: 'deep', aiSection: 'deep', label: 'Event deep dive', sub: 'signal dashboard per event', icon: Target, body: EventDeepDive },
+  { id: 'deep', aiSection: 'deep', label: 'Event deep dive', sub: 'signal dashboard + scenario sim', icon: Target, body: EventDeepDive },
   { id: 'pulse', aiSection: 'pulse', label: 'Market pulse & context', sub: 'social · news · weather · clubbing', icon: Activity, body: MarketPulse },
   { id: 'persona', aiSection: 'persona', label: 'Persona & targeting', sub: 'segments · match × event · propensity', icon: Users, body: PersonaTargeting },
   { id: 'campaign', aiSection: 'campaign', label: 'Campaigns & portfolio', sub: 'channel plan · ROI · ratios', icon: Megaphone, body: CampaignsPortfolio },
@@ -140,6 +147,7 @@ export function BehindTheScenesButton() {
 function BehindTheScenes({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const [idx, setIdx] = useState(0)
   const [focusedEventId, setFocusedEventId] = useState<string>('wimbledon-26')
+  const [paletteOpen, setPaletteOpen] = useState(false)
   const Sec = SECTIONS[idx]!.body
   const activeSection = SECTIONS[idx]!
   const currentRead = aiReads.find((r) => r.section === activeSection.aiSection)
@@ -148,17 +156,24 @@ function BehindTheScenes({ open, onOpenChange }: { open: boolean; onOpenChange: 
     if (!open) {
       setIdx(0)
       setFocusedEventId('wimbledon-26')
+      setPaletteOpen(false)
     }
   }, [open])
   useEffect(() => {
     if (!open) return
     function onKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setPaletteOpen((p) => !p)
+        return
+      }
+      if (paletteOpen) return
       if (e.key === 'ArrowRight') setIdx((i) => Math.min(SECTIONS.length - 1, i + 1))
       if (e.key === 'ArrowLeft') setIdx((i) => Math.max(0, i - 1))
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [open])
+  }, [open, paletteOpen])
 
   const navCtx = useMemo<NavCtx>(
     () => ({
@@ -191,11 +206,23 @@ function BehindTheScenes({ open, onOpenChange }: { open: boolean; onOpenChange: 
                 COMMAND CENTRE · 2026 PLANNING · EVENT SOURCING INTELLIGENCE
               </span>
             </div>
-            <Dialog.Close asChild>
-              <button aria-label="Close" className="size-8 rounded-md text-muted hover:text-text hover:bg-elev-2 flex items-center justify-center">
-                <X className="size-4" strokeWidth={1.5} />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setPaletteOpen(true)}
+                className="h-8 pl-2.5 pr-3 rounded-[var(--radius-sm)] border border-[color:var(--border)] bg-elev-2 text-muted hover:text-text hover:border-[color:var(--border-strong)] inline-flex items-center gap-2 text-[11.5px]"
+                title="Command palette"
+              >
+                <Search className="size-3.5" strokeWidth={1.5} />
+                <span>quick jump</span>
+                <kbd className="ml-1 font-mono text-[10px] text-subtle border border-[color:var(--border)] bg-elev-1 rounded px-1.5 py-0.5">⌘K</kbd>
               </button>
-            </Dialog.Close>
+              <Dialog.Close asChild>
+                <button aria-label="Close" className="size-8 rounded-md text-muted hover:text-text hover:bg-elev-2 flex items-center justify-center">
+                  <X className="size-4" strokeWidth={1.5} />
+                </button>
+              </Dialog.Close>
+            </div>
           </header>
 
           {/* Live anomaly ticker */}
@@ -242,6 +269,7 @@ function BehindTheScenes({ open, onOpenChange }: { open: boolean; onOpenChange: 
                   )
                 })}
               </ul>
+              <ProvenanceRail />
               <footer className="hairline-t p-3 flex items-center justify-between text-[10.5px] text-subtle font-mono">
                 <span>ADK · planning layer</span>
                 <span>2026 · mock</span>
@@ -265,6 +293,17 @@ function BehindTheScenes({ open, onOpenChange }: { open: boolean; onOpenChange: 
             </main>
           </div>
           </Nav.Provider>
+
+          <CommandPalette
+            open={paletteOpen}
+            onOpenChange={setPaletteOpen}
+            onJump={(sectionId, eventId) => {
+              const i = SECTIONS.findIndex((s) => s.id === sectionId)
+              if (i >= 0) setIdx(i)
+              if (eventId) setFocusedEventId(eventId)
+              setPaletteOpen(false)
+            }}
+          />
 
           {/* Footer controls */}
           <footer className="shrink-0 hairline-t flex items-center justify-between h-14 px-5 bg-elev-1">
@@ -592,6 +631,8 @@ function EventDeepDive() {
           </div>
         </Panel>
       </div>
+
+      <ScenarioSimulator event={e} />
     </div>
   )
 }
@@ -1061,24 +1102,50 @@ function Metric({
   max?: number
   accent?: boolean
 }) {
+  const animated = useCountUp(value, 520)
   const formatted = money
-    ? fmtLakh(value)
+    ? fmtLakh(animated)
     : pct
-      ? `${value}%`
+      ? `${Math.round(animated)}%`
       : numeric
-        ? value.toLocaleString('en-IN')
+        ? Math.round(animated).toLocaleString('en-IN')
         : max
-          ? `${value}${max ? ` / ${max}` : ''}`
-          : value.toString()
+          ? `${Math.round(animated)}${max ? ` / ${max}` : ''}`
+          : Math.round(animated).toString()
   return (
     <div className="rounded-[var(--radius-md)] border border-[color:var(--border)] bg-elev-1 p-4 flex flex-col gap-1.5">
       <span className="text-[10.5px] uppercase tracking-[0.18em] text-subtle font-medium font-mono">{label}</span>
-      <span className={cn('text-[22px] font-semibold tracking-tight font-mono', accent ? 'text-[color:var(--accent)]' : 'text-text')}>
+      <span className={cn('text-[22px] font-semibold tracking-tight font-mono tabular-nums', accent ? 'text-[color:var(--accent)]' : 'text-text')}>
         {formatted}
       </span>
       {sub ? <span className="text-[11px] text-subtle">{sub}</span> : null}
     </div>
   )
+}
+
+/**
+ * Quiet count-up. Eases from 0 to `target` over `duration`ms once on mount
+ * and again whenever target changes. No bouncing, no sparkle.
+ */
+function useCountUp(target: number, duration = 500): number {
+  const [value, setValue] = useState(0)
+  useEffect(() => {
+    let raf = 0
+    const start = performance.now()
+    const from = 0
+    const to = target
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / duration)
+      // easeOutQuart
+      const eased = 1 - Math.pow(1 - t, 4)
+      setValue(from + (to - from) * eased)
+      if (t < 1) raf = requestAnimationFrame(tick)
+      else setValue(to)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [target, duration])
+  return value
 }
 
 function PersonaBar({ mix }: { mix: Partial<Record<Persona, number>> }) {
@@ -1308,6 +1375,391 @@ function EventSelector({ focusedId, onSelect }: { focusedId: string; onSelect: (
           </button>
         )
       })}
+    </div>
+  )
+}
+
+// =============================================================================
+// Provenance rail — bottom of the sidebar
+// =============================================================================
+function ProvenanceRail() {
+  return (
+    <div className="shrink-0 hairline-t px-3 py-3 flex flex-col gap-2 bg-[oklch(16%_0.012_260)]">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] uppercase tracking-[0.22em] text-subtle font-mono font-medium">
+          agents · live
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="size-1.5 rounded-full bg-[color:var(--trace)]" style={{ animation: 'pulseGlow 2s ease-in-out infinite' }} />
+          <span className="text-[9.5px] text-subtle font-mono">8 online</span>
+        </span>
+      </div>
+      <ul className="flex flex-col gap-1.5 max-h-[160px] overflow-y-auto">
+        {provenanceFeed.map((p, i) => (
+          <li key={i} className="flex items-start gap-2 text-[10.5px] leading-tight">
+            <span className="text-[color:var(--trace)] shrink-0 mt-[2px]">
+              <span className="size-1 rounded-full bg-current inline-block" />
+            </span>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-baseline gap-1.5">
+                <span className="font-mono text-text truncate">{p.agent}</span>
+                <span className="font-mono text-subtle shrink-0">{p.ago}</span>
+              </div>
+              <div className="text-subtle truncate">{p.action}</div>
+            </div>
+            {p.conf != null ? (
+              <span className="font-mono text-[9.5px] text-[color:var(--accent)] shrink-0">{p.conf}</span>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+      <style>{`@keyframes pulseGlow { 0%,100% { opacity: 0.45 } 50% { opacity: 1 } }`}</style>
+    </div>
+  )
+}
+
+// =============================================================================
+// Command palette — ⌘K
+// =============================================================================
+interface PaletteItem {
+  label: string
+  hint: string
+  sectionId: string
+  eventId?: string
+  kind: 'section' | 'event' | 'action'
+}
+function CommandPalette({
+  open,
+  onOpenChange,
+  onJump,
+}: {
+  open: boolean
+  onOpenChange: (v: boolean) => void
+  onJump: (sectionId: string, eventId?: string) => void
+}) {
+  const [q, setQ] = useState('')
+  const [selected, setSelected] = useState(0)
+
+  useEffect(() => {
+    if (!open) {
+      setQ('')
+      setSelected(0)
+    }
+  }, [open])
+
+  const items: PaletteItem[] = useMemo(() => {
+    const out: PaletteItem[] = []
+    for (const s of SECTIONS) {
+      out.push({ label: s.label, hint: s.sub, sectionId: s.id, kind: 'section' })
+    }
+    for (const e of events2026) {
+      out.push({
+        label: e.name,
+        hint: `${e.city} · ${e.start} · demand ${e.demand}`,
+        sectionId: 'deep',
+        eventId: e.id,
+        kind: 'event',
+      })
+    }
+    out.push({ label: 'Run anomaly scan', hint: 'rescan 14 signal sources · ~6s', sectionId: 'pulse', kind: 'action' })
+    out.push({ label: 'Export Q2 campaign brief', hint: 'PDF · 6 campaigns', sectionId: 'campaign', kind: 'action' })
+    out.push({ label: 'Compare Wimbledon vs Masters', hint: 'portfolio what-if', sectionId: 'campaign', kind: 'action' })
+    out.push({ label: 'Open world reach map', hint: 'global pins by venue', sectionId: 'world', kind: 'action' })
+    return out
+  }, [])
+
+  const filtered = useMemo(() => {
+    if (!q) return items
+    const needle = q.toLowerCase()
+    return items.filter((it) => it.label.toLowerCase().includes(needle) || it.hint.toLowerCase().includes(needle))
+  }, [items, q])
+
+  useEffect(() => {
+    if (selected >= filtered.length) setSelected(Math.max(0, filtered.length - 1))
+  }, [filtered, selected])
+
+  function onKey(e: React.KeyboardEvent) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setSelected((s) => Math.min(filtered.length - 1, s + 1))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setSelected((s) => Math.max(0, s - 1))
+    } else if (e.key === 'Enter') {
+      e.preventDefault()
+      const pick = filtered[selected]
+      if (pick) onJump(pick.sectionId, pick.eventId)
+    } else if (e.key === 'Escape') {
+      e.preventDefault()
+      onOpenChange(false)
+    }
+  }
+
+  return (
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-[70] bg-[oklch(0%_0_0/0.45)] backdrop-blur-[1.5px]" />
+        <Dialog.Content
+          aria-describedby={undefined}
+          className="fixed z-[80] left-1/2 top-[18%] -translate-x-1/2 w-[580px] max-w-[94vw] rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-elev-1 shadow-[var(--shadow-lift)] overflow-hidden outline-none"
+          onKeyDown={onKey}
+        >
+          <Dialog.Title className="sr-only">Command palette</Dialog.Title>
+          <div className="flex items-center gap-2.5 px-4 h-12 hairline-b">
+            <Search className="size-4 text-subtle" strokeWidth={1.5} />
+            <input
+              autoFocus
+              value={q}
+              onChange={(e) => {
+                setQ(e.target.value)
+                setSelected(0)
+              }}
+              placeholder="Jump to event, section, or action…"
+              className="flex-1 bg-transparent outline-none text-[13px] text-text placeholder:text-subtle"
+            />
+            <kbd className="font-mono text-[10px] text-subtle border border-[color:var(--border)] bg-elev-2 rounded px-1.5 py-0.5">esc</kbd>
+          </div>
+          <ul className="max-h-[380px] overflow-y-auto py-1.5">
+            {filtered.length === 0 ? (
+              <li className="px-4 py-6 text-center text-[12px] text-subtle italic">No matches.</li>
+            ) : (
+              filtered.map((it, i) => {
+                const active = i === selected
+                return (
+                  <li key={`${it.kind}-${it.label}-${i}`}>
+                    <button
+                      type="button"
+                      onMouseEnter={() => setSelected(i)}
+                      onClick={() => onJump(it.sectionId, it.eventId)}
+                      className={cn(
+                        'w-full text-left px-4 py-2 flex items-center gap-3',
+                        active ? 'bg-[color:var(--accent-soft)]' : '',
+                      )}
+                    >
+                      <span className={cn('text-[9.5px] font-mono uppercase tracking-[0.14em] w-14 shrink-0', active ? 'text-[color:var(--accent)]' : 'text-subtle')}>
+                        {it.kind}
+                      </span>
+                      <span className="flex-1 min-w-0">
+                        <div className={cn('text-[12.5px] truncate', active ? 'text-[color:var(--accent)] font-medium' : 'text-text')}>
+                          {it.label}
+                        </div>
+                        <div className="text-[10.5px] text-subtle truncate">{it.hint}</div>
+                      </span>
+                      {active ? <CornerDownLeft className="size-3.5 text-[color:var(--accent)] shrink-0" strokeWidth={1.5} /> : null}
+                    </button>
+                  </li>
+                )
+              })
+            )}
+          </ul>
+          <div className="hairline-t px-4 py-2 flex items-center justify-between text-[10px] text-subtle font-mono">
+            <span>{filtered.length} result{filtered.length === 1 ? '' : 's'}</span>
+            <span>↑↓ navigate · ↵ select · esc close</span>
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  )
+}
+
+// =============================================================================
+// SECTION — Global reach (world map)
+// =============================================================================
+function WorldReach() {
+  const nav = useNav()
+  const width = 1000
+  const height = 500
+  // equirectangular projection
+  const project = (lat: number, lng: number) => ({
+    x: ((lng + 180) / 360) * width,
+    y: ((90 - lat) / 180) * height,
+  })
+  const catColour: Record<Category, string> = {
+    F1: 'var(--accent)',
+    Tennis: 'color-mix(in oklab, var(--accent) 70%, transparent)',
+    Cricket: 'color-mix(in oklab, var(--trace) 90%, transparent)',
+    Football: 'color-mix(in oklab, var(--trace) 60%, transparent)',
+    Golf: 'oklch(72% 0.11 160)',
+    Rugby: 'oklch(68% 0.12 30)',
+    Live: 'color-mix(in oklab, var(--accent) 45%, var(--trace) 55%)',
+  }
+  const regions = [
+    { city: 'Mumbai', count: events2026.filter((e) => e.country === 'India').length, rev: events2026.filter((e) => e.country === 'India').reduce((s, e) => s + e.revenuePotential, 0) },
+    { city: 'London', count: events2026.filter((e) => e.country === 'United Kingdom').length, rev: events2026.filter((e) => e.country === 'United Kingdom').reduce((s, e) => s + e.revenuePotential, 0) },
+    { city: 'Europe', count: events2026.filter((e) => ['France', 'Germany', 'Italy', 'Monaco'].includes(e.country)).length, rev: events2026.filter((e) => ['France', 'Germany', 'Italy', 'Monaco'].includes(e.country)).reduce((s, e) => s + e.revenuePotential, 0) },
+    { city: 'US / Augusta', count: events2026.filter((e) => e.country === 'United States').length, rev: events2026.filter((e) => e.country === 'United States').reduce((s, e) => s + e.revenuePotential, 0) },
+    { city: 'Middle East', count: events2026.filter((e) => e.country === 'UAE').length, rev: events2026.filter((e) => e.country === 'UAE').reduce((s, e) => s + e.revenuePotential, 0) },
+    { city: 'APAC', count: events2026.filter((e) => ['Singapore', 'Australia'].includes(e.country)).length, rev: events2026.filter((e) => ['Singapore', 'Australia'].includes(e.country)).reduce((s, e) => s + e.revenuePotential, 0) },
+  ]
+  return (
+    <div className="flex flex-col gap-6">
+      <SectionHead
+        kicker="02 · global reach"
+        title="Sixteen marquee events. Five continents."
+        blurb="Where the 2026 book actually happens. Pin size scales with composite demand; colour indicates category. Click any pin to drop into its deep-dive."
+      />
+
+      <Panel title="2026 event map" sub="equirectangular · demand-weighted pins">
+        <div className="rounded-[var(--radius-sm)] overflow-hidden border border-[color:var(--border)] bg-[oklch(13%_0.012_260)]">
+          <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto block">
+            {/* subtle grid */}
+            {Array.from({ length: 10 }).map((_, i) => (
+              <line key={`v${i}`} x1={(width / 10) * i} y1={0} x2={(width / 10) * i} y2={height} stroke="oklch(22% 0.01 260)" strokeWidth={0.4} />
+            ))}
+            {Array.from({ length: 6 }).map((_, i) => (
+              <line key={`h${i}`} x1={0} y1={(height / 6) * i} x2={width} y2={(height / 6) * i} stroke="oklch(22% 0.01 260)" strokeWidth={0.4} />
+            ))}
+            {/* equator */}
+            <line x1={0} y1={height / 2} x2={width} y2={height / 2} stroke="oklch(28% 0.01 260)" strokeWidth={0.7} strokeDasharray="4 6" />
+            {/* simplified continent blobs for hint of geography */}
+            <g fill="oklch(20% 0.01 260)" opacity={0.75}>
+              <path d="M 190 120 Q 280 100 360 130 Q 430 180 360 220 Q 280 230 220 210 Q 170 180 190 120 Z" />
+              <path d="M 440 140 Q 520 110 600 140 Q 620 220 520 240 Q 460 220 440 180 Z" />
+              <path d="M 530 260 Q 600 250 640 310 Q 620 390 560 410 Q 500 380 500 320 Z" />
+              <path d="M 620 180 Q 740 160 840 210 Q 880 280 820 340 Q 720 370 650 320 Q 600 260 620 180 Z" />
+              <path d="M 250 280 Q 330 270 360 320 Q 340 390 280 400 Q 220 370 230 320 Z" />
+              <path d="M 820 360 Q 880 350 900 400 Q 870 430 830 420 Z" />
+            </g>
+
+            {/* pins */}
+            {events2026.map((e) => {
+              const coord = cityCoords[e.city]
+              if (!coord) return null
+              const { x, y } = project(coord.lat, coord.lng)
+              const r = 5 + (e.demand / 100) * 10
+              return (
+                <g
+                  key={e.id}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => {
+                    nav.focusEvent(e.id)
+                    nav.goToSection('deep')
+                  }}
+                >
+                  <circle cx={x} cy={y} r={r + 6} fill={catColour[e.category]} opacity={0.15} />
+                  <circle cx={x} cy={y} r={r} fill={catColour[e.category]} opacity={0.85} />
+                  <circle cx={x} cy={y} r={1.5} fill="oklch(98% 0 0)" />
+                  <text x={x + r + 6} y={y + 3} fontSize="9.5" fill="oklch(72% 0.01 260)" fontFamily="Geist Mono, ui-monospace, monospace">
+                    {e.name.split('·')[0].split('(')[0].trim().slice(0, 18)}
+                  </text>
+                </g>
+              )
+            })}
+          </svg>
+        </div>
+      </Panel>
+
+      <div className="grid grid-cols-[1fr_1fr] gap-6">
+        <Panel title="Regional book" sub="2026 revenue potential by region">
+          <ul className="flex flex-col gap-2.5 text-[12px]">
+            {regions.sort((a, b) => b.rev - a.rev).map((r) => (
+              <li key={r.city} className="grid grid-cols-[120px_1fr_70px_60px] items-center gap-3">
+                <span className="text-text">{r.city}</span>
+                <div className="h-1.5 rounded-full bg-elev-2 overflow-hidden">
+                  <span className="block h-full bg-[color:var(--accent)]" style={{ width: `${Math.min(100, r.rev / 800_000)}%` }} />
+                </div>
+                <span className="font-mono text-[11px] text-text text-right">{fmtLakh(r.rev)}</span>
+                <span className="font-mono text-[11px] text-subtle text-right">{r.count}ev</span>
+              </li>
+            ))}
+          </ul>
+        </Panel>
+        <Panel title="Category legend" sub="pin colour encodes category">
+          <ul className="grid grid-cols-2 gap-y-2 gap-x-4 text-[12px]">
+            {categoryOrder.map((c) => (
+              <li key={c} className="flex items-center gap-2">
+                <span className="size-2.5 rounded-full" style={{ background: catColour[c] }} />
+                <span className="text-muted">{c}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="text-[11.5px] text-subtle leading-relaxed mt-4">
+            Pin size encodes composite demand (0-100). Halos indicate attention intensity. Click any pin to drop directly
+            into the event deep dive — the whole command centre is drill-addressable.
+          </p>
+        </Panel>
+      </div>
+    </div>
+  )
+}
+
+// =============================================================================
+// Scenario simulator — shown inside the Event Deep Dive
+// =============================================================================
+function ScenarioSimulator({ event }: { event: EventRow }) {
+  const [priceDelta, setPriceDelta] = useState(0) // -20 .. +20 %
+  const [attachLift, setAttachLift] = useState(0) // -15 .. +15 pts
+  const [releaseShare, setReleaseShare] = useState(60) // % of remaining to release
+
+  // Project: seats sellable = inventoryRemaining * (releaseShare/100) * (1 - priceDelta/100 * elasticity)
+  const elasticity = 0.8
+  const seats = Math.round(event.inventoryRemaining * (releaseShare / 100) * (1 - (priceDelta / 100) * elasticity))
+  const aovProjected = Math.round(event.aov * (1 + priceDelta / 100))
+  const attachProjected = Math.max(0, Math.min(100, event.attachRate + attachLift))
+  const revenueProjected = Math.max(0, seats * aovProjected * (1 + attachProjected / 400))
+  const marginProjected = Math.max(5, Math.min(55, event.margin + priceDelta * 0.4 + attachLift * 0.15))
+
+  return (
+    <Panel title="Scenario simulator" sub="adjust the levers, watch projections update">
+      <div className="grid grid-cols-[1.2fr_1fr] gap-6">
+        <div className="flex flex-col gap-5">
+          <SliderRow label="Price ladder" value={priceDelta} min={-20} max={20} unit="%" onChange={setPriceDelta} />
+          <SliderRow label="Hospitality attach lift" value={attachLift} min={-15} max={15} unit="pts" onChange={setAttachLift} />
+          <SliderRow label="Inventory release" value={releaseShare} min={0} max={100} unit="%" onChange={setReleaseShare} />
+        </div>
+        <div className="flex flex-col gap-3">
+          <ProjectionRow label="Seats sold · projection" value={String(seats)} />
+          <ProjectionRow label="AOV · per guest" value={fmtLakh(aovProjected)} />
+          <ProjectionRow label="Attach · hospitality" value={`${attachProjected}%`} />
+          <div className="hairline-t pt-3 mt-1">
+            <ProjectionRow label="Projected revenue" value={fmtLakh(revenueProjected)} accent />
+            <ProjectionRow label="Projected margin" value={`${Math.round(marginProjected)}%`} />
+          </div>
+          <p className="text-[10.5px] text-subtle font-mono leading-relaxed mt-1">
+            elasticity = {elasticity.toFixed(1)} · baseline from current book
+          </p>
+        </div>
+      </div>
+    </Panel>
+  )
+}
+
+function SliderRow({
+  label, value, min, max, unit, onChange,
+}: {
+  label: string; value: number; min: number; max: number; unit: string; onChange: (n: number) => void
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-baseline justify-between text-[12px]">
+        <span className="text-muted">{label}</span>
+        <span className="font-mono text-text">
+          {value >= 0 && unit !== '%' && min < 0 ? '+' : ''}{value}{unit}
+        </span>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full accent-[color:var(--accent)]"
+      />
+      <div className="flex justify-between text-[10px] text-subtle font-mono">
+        <span>{min}{unit}</span>
+        <span>{max}{unit}</span>
+      </div>
+    </div>
+  )
+}
+
+function ProjectionRow({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+  return (
+    <div className="flex items-baseline justify-between py-1.5 hairline-b last:hairline-b-0">
+      <span className="text-[12px] text-muted">{label}</span>
+      <span className={cn('font-mono text-[12.5px] tabular-nums', accent ? 'text-[color:var(--accent)]' : 'text-text')}>
+        {value}
+      </span>
     </div>
   )
 }

@@ -542,6 +542,45 @@ export interface Anomaly {
   severity: 'info' | 'watch' | 'action'
   ago: string
 }
+// -----------------------------------------------------------------------------
+// Lat/lng for the world heat map
+// -----------------------------------------------------------------------------
+export const cityCoords: Record<string, { lat: number; lng: number }> = {
+  'Melbourne': { lat: -37.81, lng: 144.96 },
+  'Paris': { lat: 48.86, lng: 2.35 },
+  'Augusta': { lat: 33.47, lng: -82.00 },
+  'Monte Carlo': { lat: 43.74, lng: 7.42 },
+  'Munich': { lat: 48.14, lng: 11.58 },
+  'London': { lat: 51.51, lng: -0.13 },
+  'St Andrews': { lat: 56.34, lng: -2.80 },
+  'Mumbai': { lat: 19.08, lng: 72.88 },
+  'New York': { lat: 40.71, lng: -74.01 },
+  'Monza': { lat: 45.58, lng: 9.27 },
+  'Ahmedabad': { lat: 23.03, lng: 72.58 },
+  'Abu Dhabi': { lat: 24.47, lng: 54.37 },
+  'Singapore': { lat: 1.35, lng: 103.82 },
+}
+
+// -----------------------------------------------------------------------------
+// Agent provenance feed — shown as a mini rail in the sidebar
+// -----------------------------------------------------------------------------
+export interface Provenance {
+  agent: string
+  action: string
+  ago: string
+  conf?: number
+}
+export const provenanceFeed: Provenance[] = [
+  { agent: 'SignalsScanner', action: 'flagged Coldplay social anomaly', ago: '4m', conf: 92 },
+  { agent: 'DemandForecaster', action: 'rebuilt Wimbledon 12-wk curve', ago: '18m', conf: 88 },
+  { agent: 'InventoryAllocator', action: 'held 9 Trophy seats for 75+ propensity cohort', ago: '26m', conf: 84 },
+  { agent: 'NewsSentimenter', action: 'ingested 214 press items · UEFA draw', ago: '41m', conf: 79 },
+  { agent: 'PersonaMatcher', action: 'matched 64 UHNI to Abu Dhabi GP', ago: '1h', conf: 86 },
+  { agent: 'WeatherBridge', action: 'refreshed Monza Sunday storm risk', ago: '1h', conf: 74 },
+  { agent: 'CampaignPlanner', action: 'revised Monaco private-dinner ROI', ago: '2h', conf: 81 },
+  { agent: 'PortfolioOptimizer', action: 'projected +₹2.4Cr lift on clubbing ops', ago: '3h', conf: 77 },
+]
+
 export const anomalies: Anomaly[] = [
   { id: 'a1', event: 'Coldplay · Mumbai', signal: 'social velocity', delta: '+52% (2.6σ)', severity: 'action', ago: '4m ago' },
   { id: 'a2', event: 'Monaco GP', signal: 'paddock sell-through', delta: '+9% DoD', severity: 'watch', ago: '12m ago' },
