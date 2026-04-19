@@ -123,13 +123,16 @@ export function ImmersiveFlow({ open, onOpenChange }: { open: boolean; onOpenCha
               exit={{ opacity: 0, y: -6, transition: { duration: 0.3 } }}
               className="absolute left-10 top-10 pointer-events-none"
             >
-              <div className="text-[11px] uppercase tracking-[0.24em] text-subtle font-medium mb-2">
+              <div className="text-[10.5px] uppercase tracking-[0.32em] text-[color:var(--accent)] font-medium mb-3 font-mono">
                 act {String(ACTS.indexOf(activeAct) + 1).padStart(2, '0')} · of {ACTS.length}
               </div>
-              <div className="display text-[46px] md:text-[56px] leading-[1.02] font-medium tracking-tight text-text max-w-[680px]">
+              <div
+                className="text-[38px] md:text-[46px] leading-[1.1] font-semibold tracking-[-0.015em] text-text max-w-[680px]"
+                style={{ fontFamily: 'var(--font-sans)' }}
+              >
                 {activeAct.label}
               </div>
-              <div className="mt-3 text-[14px] text-muted">{activeAct.sub}</div>
+              <div className="mt-3 text-[13.5px] text-muted font-mono tracking-[-0.005em]">{activeAct.sub}</div>
             </motion.div>
           </AnimatePresence>
 
