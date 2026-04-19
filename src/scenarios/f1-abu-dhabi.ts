@@ -20,7 +20,6 @@ import {
   isPostTool,
   lastMessage,
   matchUser,
-  openers,
   sum,
   tierCard,
   toolResult,
@@ -48,8 +47,9 @@ const conciergeIntro: Beat = {
       kind: 'trace',
       event: { kind: 'skill.load', skill: 'dietary-accessibility', tools: ['plan_arrangements'] },
     },
-    { kind: 'say', text: 'A late-November weekend at Yas Marina, with accessibility threaded through. ' },
-    { kind: 'say', text: openers.checkingAvailability + ' ', gapMs: 120 },
+    { kind: 'say', text: 'A late-November weekend at Yas Marina — the twilight race, the marina lit up, the season\u2019s last grid. ', gapMs: 80 },
+    { kind: 'say', text: 'Accessibility will thread through every arrangement, not sit on top of it. ', gapMs: 80 },
+    { kind: 'say', text: 'One moment — the Researcher is on the weekend, Logistics on hotels, Experience on hospitality, and Budget is sizing the whole thing against your cap.', gapMs: 160 },
     {
       kind: 'toolCall',
       name: 'agent.Researcher',
@@ -93,7 +93,7 @@ const conciergeAssemble: Beat = {
   id: 'concierge.f1.assemble',
   match: (input) => isPostTool(input) && input.messages.some((m) => m.toolName === 'agent.Budget'),
   steps: () => [
-    { kind: 'say', text: 'Here is where I would start. ', gapMs: 120 },
+    { kind: 'say', text: 'Here is the shape I would propose — a three-day arrangement, read left-to-right. ', gapMs: 100 },
     {
       kind: 'artifact',
       artifact: {
@@ -146,7 +146,7 @@ const conciergeAssemble: Beat = {
     },
     {
       kind: 'say',
-      text: 'Three of our specialists each returned a shortlist — I will keep them visible in the workspace and we can refine together.',
+      text: 'Three shortlists are alongside — hotels, hospitality, pricing — and the itinerary already accounts for pit-lane access and a quiet race-day lunch. Any piece can change without redoing the rest; I left a few refinements at the edges of the cards to make that fast.',
     },
   ],
 }
@@ -155,13 +155,11 @@ const conciergeCloser: Beat = {
   id: 'concierge.f1.closer-pitlane',
   match: (input) => !isPostTool(input) && matchUser(input, /closer to (the )?pit ?lane|pit lane|paddock( friendly)?/i),
   steps: () => [
-    { kind: 'say', text: 'Understood — prioritising pit-lane proximity. ' },
+    { kind: 'say', text: 'Pit-lane it is. Paddock Club tends to win on this dimension — forty minutes on the Thursday walk alone — though Trophy keeps a calmer lounge if the group wants a quieter day two. ', gapMs: 100 },
     {
       kind: 'toolCall',
       name: 'agent.Experience',
-      args: {
-        task: 'Re-rank hospitality tiers for pit-lane proximity; prefer Paddock Club and Trophy Lounge.',
-      },
+      args: { task: 'Re-rank hospitality tiers for pit-lane proximity; prefer Paddock Club and Trophy Lounge.' },
       id: 'call.experience.pitlane',
     },
   ],
@@ -177,14 +175,16 @@ const conciergePitlanePost: Beat = {
       input.messages.some((m) => m.role === 'user' && /pit ?lane|paddock/i.test(m.content))
     )
   },
-  steps: () => [{ kind: 'say', text: 'Re-ranked. Paddock Club is the one with the widest pit-lane window.' }],
+  steps: () => [
+    { kind: 'say', text: 'Re-ranked. Paddock Club now sits first — roughly forty minutes of pit-lane access on Thursday, then rotating team-garage windows across the race days. Trophy is the calmer alternate.' },
+  ],
 }
 
 const conciergeResearchInsider: Beat = {
   id: 'concierge.f1.research-insider',
   match: (input) => !isPostTool(input) && matchUser(input, /driver|meet|norris|paddock walk|insider|money.can|upgrade/i),
   steps: () => [
-    { kind: 'say', text: 'Let me see what quiet windows exist. ' },
+    { kind: 'say', text: 'Driver meets are a moving target — teams rotate on short notice. There are usually two or three quiet windows across the weekend; let me see which are still open. ', gapMs: 100 },
     {
       kind: 'toolCall',
       name: 'agent.Researcher',
@@ -207,7 +207,7 @@ const conciergeInsiderPost: Beat = {
     )
   },
   steps: () => [
-    { kind: 'say', text: 'Friday 15:00 is the quietest pit-lane walk window — it usually closes a week out. I can hold it now.' },
+    { kind: 'say', text: 'Friday 15:00 is open and the quietest of the weekend — a sixty-minute window, teams rotating, smaller crowd than the Saturday walk. These tend to close about ten days out. I can hold it for you now. ' },
     {
       kind: 'artifact',
       artifact: {
@@ -232,7 +232,7 @@ const conciergeRemember: Beat = {
         kind: 'trace',
         event: { kind: 'memory.write', fact: userText.replace(/^(please )?remember\s*(that )?/i, '').trim() },
       },
-      { kind: 'say', text: openers.remembering + ' ' },
+      { kind: 'say', text: 'Noted. Your partner\u2019s preference will thread itself into the hospitality kitchen, the hotel breakfast, and the in-flight meal on this trip — and every future one. You will not need to raise it again. ', gapMs: 100 },
       {
         kind: 'artifact',
         artifact: {
@@ -251,7 +251,7 @@ const conciergeGift: Beat = {
   id: 'concierge.f1.gift',
   match: (input) => !isPostTool(input) && matchUser(input, /gift|gifting|frame as/i),
   steps: () => [
-    { kind: 'say', text: 'Let me frame this the way it deserves. ' },
+    { kind: 'say', text: 'A gift asks for a slightly different rhythm — quieter landings, a surprise upgrade or two, nothing announced. Drafting it now. ', gapMs: 100 },
     {
       kind: 'toolCall',
       name: 'agent.Personalizer',
@@ -266,7 +266,7 @@ const conciergeGift: Beat = {
 const conciergeGiftPost: Beat = {
   id: 'concierge.f1.gift-post',
   match: (input) => isPostTool(input) && lastMessage(input)?.toolName === 'agent.Personalizer',
-  steps: () => [{ kind: 'say', text: 'The gifting framing is now visible alongside the itinerary.' }],
+  steps: () => [{ kind: 'say', text: 'Framing is in the workspace. If it plays well with the recipient, I can fold in a brief, unannounced grid walk on the Saturday — a small surprise inside the larger one.' }],
 }
 
 const conciergeDossier: Beat = {
@@ -287,7 +287,7 @@ const conciergeDossier: Beat = {
     const total = sum(lines.map((l) => l.amount))
     const userAsked = input.messages[input.messages.length - 1]?.content ?? ''
     return [
-      { kind: 'say', text: `Drafting the dossier now${userAsked ? ' — marked ready for review' : ''}. ` },
+      { kind: 'say', text: `Putting the dossier together now. It carries the arrangements, the kept-in-mind notes, and what happens next — forward-able as is${userAsked ? '' : ''}. `, gapMs: 100 },
       {
         kind: 'artifact',
         artifact: {

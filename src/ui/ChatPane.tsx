@@ -44,6 +44,7 @@ export function ChatPane() {
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
         {isEmpty ? <EmptyState onPick={(q) => send(q)} /> : <Transcript />}
       </div>
+      {!isEmpty ? <QuickReplies onPick={(t) => send(t)} /> : null}
       <form
         onSubmit={onSubmit}
         className="shrink-0 p-3 bg-elev-1"
@@ -205,6 +206,56 @@ function AgentBubble({ text, streaming, agent }: { text: string; streaming?: boo
         {text}
         {streaming ? <span className="inline-block w-[1px] h-3.5 bg-[color:var(--accent)] ml-0.5 align-middle animate-pulse" /> : null}
       </p>
+    </div>
+  )
+}
+
+function QuickReplies({ onPick }: { onPick: (t: string) => void }) {
+  const artifacts = useApp((s) => s.artifacts)
+  const isStreaming = useApp((s) => s.isStreaming)
+  const messages = useApp((s) => s.messages)
+
+  const chips = useMemo(() => {
+    // Pull the freshest artifact with refinements.
+    for (let i = artifacts.length - 1; i >= 0; i--) {
+      const a = artifacts[i]!
+      if ('refinements' in a && a.refinements && a.refinements.length) return a.refinements
+      if (a.kind === 'refinement_chips') return a.chips
+    }
+    // Fallback universal set — shown before any refinable artifact exists.
+    return [
+      { id: 'qr.closer', label: 'Closer to the pit lane', tone: 'accent' as const },
+      { id: 'qr.driver', label: 'Any driver meet windows?' },
+      { id: 'qr.gift', label: 'Frame as a gift' },
+      { id: 'qr.proceed', label: 'Proceed' },
+    ]
+  }, [artifacts])
+
+  // Hide while streaming to avoid double-clicks mid-turn
+  if (isStreaming || messages.length === 0) return null
+
+  return (
+    <div className="shrink-0 px-3 pt-2.5 pb-1 bg-elev-1" style={{ borderTop: '1px solid var(--border)' }}>
+      <div className="flex items-center gap-1 mb-1.5">
+        <span className="text-[10px] uppercase tracking-[0.16em] text-subtle font-medium">suggested</span>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {chips.slice(0, 5).map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            onClick={() => onPick(c.prompt ?? c.label)}
+            className={cn(
+              'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border text-[11px] font-medium transition-colors',
+              c.tone === 'accent'
+                ? 'bg-[color:var(--accent-soft)] border-[color:var(--accent-soft)] text-[color:var(--accent)] hover:brightness-110'
+                : 'bg-elev-2 border-[color:var(--border)] text-muted hover:text-text hover:border-[color:var(--border-strong)]',
+            )}
+          >
+            {c.label}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
