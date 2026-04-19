@@ -43,7 +43,7 @@ const ACTS: Act[] = [
   { t: 30.5, id: 'hitl', label: 'human approval', sub: '`request_approval` · turn paused' },
   { t: 34.5, id: 'compact', label: 'context compaction', sub: '−120k tokens · stay disciplined' },
   { t: 37.5, id: 'dossier', label: 'dossier delivered', sub: 'a single cohesive response' },
-  { t: 41.0, id: 'credits', label: 'powered by google', sub: 'adk · a2a · a2ui · gemini 3 flash' },
+  { t: 41.0, id: 'credits', label: 'powered by Google AI', sub: 'ADK · A2A · A2UI · Gemini 3 Flash · gemini-embedding-2' },
 ]
 
 const TOTAL = 44
