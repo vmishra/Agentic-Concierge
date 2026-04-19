@@ -49,7 +49,7 @@ const F1_PARTY: Party = {
   total: '₹27.41 L',
   guests: [
     { name: 'Mr Vikas Mishra', role: 'Primary guest · lead signatory' },
-    { name: 'Mrs Priya Mishra', role: 'Spouse', note: 'plant-based dining across all services' },
+    { name: 'Mrs Atrika Mishra', role: 'Spouse', note: 'plant-based dining across all services' },
     { name: 'Mr Rohan Kapur', role: 'Co-guest' },
     { name: 'Mrs Naina Kapur', role: 'Co-guest', note: 'step-free access · uses a powered mobility chair' },
   ],
@@ -59,7 +59,7 @@ const F1_PARTY: Party = {
     detail:
       'Grand Marina Suite with adjoining Deluxe Room. Step-free layout; roll-in shower; lowered bedside call button. North-lift access. Late check-out on departure day pre-arranged.',
     amenities: [
-      'In-room plant-based breakfast menu configured for Mrs Priya Mishra',
+      'In-room plant-based breakfast menu configured for Mrs Atrika Mishra',
       'Dedicated butler across the stay (Omar)',
       '24-hour accessible turndown service',
       'Private arrival + luggage concierge at Abu Dhabi International',
@@ -136,7 +136,7 @@ const WIM_PARTY: Party = {
   total: '₹70.00 L',
   guests: [
     { name: 'Mr Vikas Mishra', role: 'Primary guest' },
-    { name: 'Mrs Priya Mishra', role: 'Spouse', note: 'plant-based dining' },
+    { name: 'Mrs Atrika Mishra', role: 'Spouse', note: 'plant-based dining' },
     { name: 'Mr Devansh Mishra', role: 'Brother' },
     { name: 'Mrs Sanya Mishra', role: 'Sister-in-law', note: 'gluten-free' },
     { name: 'Master Aarav Mishra', role: 'Son · 14' },
@@ -162,7 +162,7 @@ const WIM_PARTY: Party = {
   cultural: ['Private V&A morning · Sunday 5 July · family guide Felix', 'Family matinee at Regents Park Open Air Theatre', 'Early dinner at The Ivy · Monday'],
   accessibility: [],
   dietary: [
-    'Plant-based configuration across all dining (Mrs Priya Mishra)',
+    'Plant-based configuration across all dining (Mrs Atrika Mishra)',
     'Gluten-free configuration across all dining (Mrs Sanya Mishra)',
     'Pavilion kitchen pre-briefed; both guests noted by name',
   ],
