@@ -148,8 +148,14 @@ export function accessibleHotelsIn(city: string): Hotel[] {
   return hotels.filter((h) => h.city === city && h.accessibility)
 }
 
+/**
+ * Scenario artifact IDs are stable by base. When an agent re-emits an
+ * artifact with the same base (e.g. "tiers.f1"), the workspace store
+ * finds the existing id and replaces it — so refining a shortlist
+ * updates the card in place rather than appending a duplicate.
+ */
 export function artifactId(base: string) {
-  return `${base}.${Math.random().toString(36).slice(2, 8)}`
+  return base
 }
 
 /** Build a standard concierge-voice opener. */
