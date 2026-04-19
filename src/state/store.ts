@@ -12,6 +12,7 @@ import { buildAgents } from '@/agents'
 import type { LlmAgent } from '@/adk/agent'
 import { MockProvider } from '@/adk/providers/mock'
 import { allScenarios } from '@/scenarios'
+import { recomputePricing } from '@/scenarios/pricing'
 import { run } from '@/adk/runner'
 import { defaultPersona } from '@/data/personas'
 
@@ -177,12 +178,15 @@ export const useApp = create<AppState>()(
       },
 
       selectOption(artifactId, optionId) {
-        set((s) => ({
-          artifacts: s.artifacts.map((a) => {
+        set((s) => {
+          const withSelection = s.artifacts.map((a) => {
             if (a.id !== artifactId || a.kind !== 'option_card_grid') return a
             return { ...a, options: a.options.map((o) => ({ ...o, selected: o.id === optionId })) }
-          }),
-        }))
+          })
+          // Rebuild any pricing_breakdown that depends on this selection so
+          // the total tracks the guest's choice (hotel or tier) in real time.
+          return { artifacts: recomputePricing(withSelection) }
+        })
       },
 
       async setMode(mode) {
