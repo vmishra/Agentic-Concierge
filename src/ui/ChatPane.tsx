@@ -170,11 +170,14 @@ function Transcript() {
     <div className="flex flex-col gap-4 p-5">
       <AnimatePresence initial={false}>
         {visible.map((m) => (
+          // No `layout` prop — streaming text grows its container naturally.
+          // Animating height on every token chunk is what made the bubble
+          // feel jittery. Entrance animations stay (one-off).
           <motion.div
             key={m.id}
-            layout
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0, transition: spring }}
+            style={{ contain: 'layout style' }}
           >
             {m.role === 'user' ? (
               <UserBubble text={m.content} />
@@ -202,9 +205,33 @@ function AgentBubble({ text, streaming, agent }: { text: string; streaming?: boo
   return (
     <div className="flex flex-col gap-1 max-w-[90%]">
       <span className="text-[10.5px] uppercase tracking-[0.14em] text-subtle font-medium">{agent}</span>
-      <p className="text-[13.5px] text-text leading-relaxed whitespace-pre-line">
+      <p
+        className="text-[13.5px] text-text leading-[1.65] whitespace-pre-line"
+        style={{
+          // Stable metrics during stream — prevents the perceived jump
+          // when the typeface is still loading or a chunk boundary
+          // lands mid-word.
+          fontVariationSettings: '"wght" 400',
+          fontOpticalSizing: 'auto',
+          wordBreak: 'normal',
+          overflowWrap: 'break-word',
+        }}
+      >
         {text}
-        {streaming ? <span className="inline-block w-[1px] h-3.5 bg-[color:var(--accent)] ml-0.5 align-middle animate-pulse" /> : null}
+        {streaming ? (
+          <span
+            aria-hidden
+            className="inline-block align-baseline animate-pulse"
+            style={{
+              width: 2,
+              height: '1em',
+              marginLeft: 2,
+              transform: 'translateY(2px)',
+              background: 'var(--accent)',
+              animationDuration: '1.2s',
+            }}
+          />
+        ) : null}
       </p>
     </div>
   )

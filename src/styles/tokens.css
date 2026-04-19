@@ -85,6 +85,20 @@
   --color-success: var(--success);
 }
 
+/*
+ * Fallback font-face tuned to Geist's metrics so the system font used
+ * before Geist loads has similar x-height, ascent and descent. Keeps
+ * layout steady if the typeface ever does swap in mid-stream.
+ */
+@font-face {
+  font-family: "GeistFallback";
+  src: local("Inter"), local("Helvetica Neue"), local("Arial");
+  size-adjust: 104%;
+  ascent-override: 92%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+
 html,
 body,
 #root {
@@ -92,8 +106,11 @@ body,
   width: 100%;
   background: var(--surface);
   color: var(--text);
-  font-family: var(--font-sans);
+  font-family: var(--font-sans), "GeistFallback", system-ui, sans-serif;
   font-feature-settings: "ss01", "cv11", "tnum";
+  font-synthesis: none;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

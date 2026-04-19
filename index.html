@@ -8,7 +8,21 @@
     <meta name="description" content="Agent Concierge — a prototype of what bespoke, agent-driven experiential travel planning feels like in 2026." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" />
+    <!--
+      display=block waits up to 3s for the typeface to load before falling
+      back. Prevents the FOUT swap-in that makes streaming text jump as
+      Geist arrives mid-stream. Paired with preload below so the block is
+      almost always invisible on first paint.
+    -->
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=block"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=block"
+    />
     <title>Agent Concierge</title>
   </head>
   <body>
