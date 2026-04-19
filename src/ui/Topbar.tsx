@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Settings2 } from 'lucide-react'
 import { useApp } from '@/state/store'
+import { cn } from '@/lib/cn'
 import { SettingsSheet } from './SettingsSheet'
 import { ArchitectureTourButton } from './tour/ArchitectureTour'
 import { BehindTheScenesButton } from './tour/BehindTheScenes'
@@ -51,10 +52,42 @@ export function Topbar() {
 }
 
 function Wordmark() {
+  const streaming = useApp((s) => s.isStreaming)
   return (
-    <div className="flex items-baseline gap-2">
-      <span className="display text-[20px] font-medium tracking-tight">Agent Concierge</span>
+    <div className="flex items-center gap-2.5">
+      <LiveDot streaming={streaming} />
+      <span className="display text-[20px] font-medium tracking-tight leading-none pb-[2px]">
+        Agent Concierge
+      </span>
+      <span
+        className={cn(
+          'hidden md:inline text-[10px] uppercase tracking-[0.22em] font-mono font-medium transition-colors',
+          streaming ? 'text-[color:var(--accent)]' : 'text-[color:var(--success)]',
+        )}
+      >
+        {streaming ? 'responding' : 'online'}
+      </span>
     </div>
+  )
+}
+
+function LiveDot({ streaming }: { streaming: boolean }) {
+  const color = streaming ? 'var(--accent)' : 'var(--success)'
+  return (
+    <span className="relative flex size-2 shrink-0" aria-hidden>
+      <span
+        className="absolute inset-0 rounded-full"
+        style={{ background: color }}
+      />
+      <span
+        className="absolute inset-0 rounded-full animate-ping"
+        style={{
+          background: color,
+          opacity: 0.55,
+          animationDuration: streaming ? '1.1s' : '2.4s',
+        }}
+      />
+    </span>
   )
 }
 
