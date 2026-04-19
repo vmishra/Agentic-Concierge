@@ -881,21 +881,32 @@ export function RunnerDiagram() {
 // ---------------------------------------------------------------------------
 
 export function HierarchyDiagram() {
-  const L1 = { x: 260, y: 60 } // root coordinator
+  // L2: 5 nodes, each 100 wide, 10px gap. Start at x=30 → ends at x=570 (≤600).
+  const L2_W = 100
+  const L2_Y = 200
   const L2 = [
-    { name: 'Researcher', x: 60, y: 200 },
-    { name: 'Logistics', x: 180, y: 200 },
-    { name: 'Experience', x: 300, y: 200 },
-    { name: 'Budget', x: 420, y: 200 },
-    { name: 'Personalizer', x: 540, y: 200 },
-  ]
+    { name: 'Researcher', x: 30 },
+    { name: 'Logistics', x: 140 },
+    { name: 'Experience', x: 250 },
+    { name: 'Budget', x: 360 },
+    { name: 'Personalizer', x: 470 },
+  ].map((n) => ({ ...n, y: L2_Y }))
+  // Centre the coordinator above the middle of the row (Experience).
+  const L1 = { x: L2[2]!.x + L2_W / 2, y: 60 }
+  // L3 nodes, 64 wide, positioned under their parent.
+  const L3_W = 64
+  const L3_Y = 340
   const L3 = [
-    { parent: 0, name: 'plan', x: 20, y: 340 },
-    { parent: 0, name: 'search', x: 100, y: 340 },
-    { parent: 2, name: 'insider', x: 260, y: 340 },
-    { parent: 2, name: 'tier-rank', x: 340, y: 340 },
-    { parent: 4, name: 'narrative', x: 540, y: 340 },
-  ]
+    { parent: 0, name: 'plan', offset: -20 },
+    { parent: 0, name: 'search', offset: 36 },
+    { parent: 2, name: 'insider', offset: -24 },
+    { parent: 2, name: 'tier-rank', offset: 32 },
+    { parent: 4, name: 'narrative', offset: 18 },
+  ].map((c) => ({
+    ...c,
+    x: L2[c.parent]!.x + L2_W / 2 - L3_W / 2 + c.offset,
+    y: L3_Y,
+  }))
 
   return (
     <motion.svg viewBox="0 0 600 480" className="w-full h-auto" initial="hidden" animate="show">
