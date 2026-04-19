@@ -20,13 +20,6 @@ function makeRuntime() {
     for (const s of a.subAgents) attach(s)
   }
   attach(concierge)
-  const backend = new (class {
-    facts: Parameters<MemoryService['add']>[0][] = []
-    store: { id: string; text: string; vector: number[]; createdAt: number }[] = []
-    all() { return this.store }
-    upsert(f: Parameters<ReturnType<typeof makeBackend>['upsert']>[0]) { this.store.push(f) }
-    clear() { this.store = [] }
-  })()
   return {
     provider,
     concierge,
