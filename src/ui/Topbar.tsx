@@ -4,6 +4,7 @@ import { useApp } from '@/state/store'
 import { SettingsSheet } from './SettingsSheet'
 import { ArchitectureTourButton } from './tour/ArchitectureTour'
 import { BehindTheScenesButton } from './tour/BehindTheScenes'
+import { HyperCareButton } from './tour/HyperCare'
 
 export function Topbar() {
   const [open, setOpen] = useState(false)
@@ -25,6 +26,7 @@ export function Topbar() {
           <ModePill mode={mode} label={providerLabel} />
           <ArchitectureTourButton />
           <BehindTheScenesButton />
+          <HyperCareButton />
           <button
             type="button"
             className="text-muted hover:text-text hover:bg-elev-1 rounded-md p-2 transition-colors"
