@@ -127,12 +127,20 @@ export class MockProvider implements Provider {
 }
 
 function defaultFallback(input: GenerateInput): BeatStep[] {
-  return [
-    {
-      kind: 'say',
-      text: `Acknowledged. I'll take this from here — (mock agent "${input.agent}" has no scripted reply for this input).`,
-    },
-  ]
+  // Stay in character. Each agent's voice is consistent even when the
+  // conversation slides off-script.
+  const a = input.agent
+  if (a === 'Concierge') {
+    return [
+      {
+        kind: 'say',
+        text: 'Noted. Let me take a moment with that — would you like me to push on a particular dimension (closer to the venue, a quieter shape, a different tier), or should I keep what we have and bring a fresh option in alongside?',
+      },
+    ]
+  }
+  // Sub-agents respond with a short, neutral confirmation. Their output is
+  // absorbed as a tool-result summary and does not surface to the user.
+  return [{ kind: 'say', text: 'Acknowledged.' }]
 }
 
 function sleep(ms: number) {

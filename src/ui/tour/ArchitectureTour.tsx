@@ -179,72 +179,68 @@ function ArchitectureTour({ open, onOpenChange }: { open: boolean; onOpenChange:
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-[oklch(0%_0_0/0.6)] backdrop-blur-[3px] data-[state=open]:animate-[fadeIn_180ms_ease-out]" />
         <Dialog.Content
+          aria-describedby={undefined}
           className={cn(
             'fixed z-50 inset-4 md:inset-10 rounded-[var(--radius-2xl)] overflow-hidden outline-none',
-            'bg-surface border border-[color:var(--border)] shadow-[var(--shadow-lift)] grain',
+            'bg-surface border border-[color:var(--border)] shadow-[var(--shadow-lift)]',
             'flex flex-col',
-            'data-[state=open]:animate-[tourIn_260ms_cubic-bezier(0.16,1,0.3,1)]',
           )}
         >
-          <header className="shrink-0 hairline-b flex items-center justify-between h-14 px-5">
+          <header className="shrink-0 hairline-b flex items-center justify-between h-14 px-5 bg-elev-1">
             <div className="flex items-center gap-3">
-              <Dialog.Title asChild>
-                <span className="display text-[17px] font-medium">Under the hood</span>
-              </Dialog.Title>
-              <span className="text-[11px] text-subtle">a tour of the multi-agent machine behind the concierge</span>
+              <Dialog.Title className="display text-[17px] font-medium">Under the hood</Dialog.Title>
+              <span className="text-[11px] text-subtle hidden md:inline">a tour of the multi-agent machine behind the concierge</span>
             </div>
             <Dialog.Close asChild>
               <button
                 aria-label="Close tour"
-                className="size-8 rounded-md text-muted hover:text-text hover:bg-elev-1 flex items-center justify-center"
+                className="size-8 rounded-md text-muted hover:text-text hover:bg-elev-2 flex items-center justify-center"
               >
                 <X className="size-4" strokeWidth={1.5} />
               </button>
             </Dialog.Close>
           </header>
 
-          <div className="flex min-h-0 flex-1">
-            <div className="flex-1 min-w-0 overflow-y-auto">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={slide.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0, transition: spring }}
-                  exit={{ opacity: 0, y: -6, transition: { duration: 0.12 } }}
-                  className="grid grid-cols-1 lg:grid-cols-[1fr_1.1fr] gap-0"
-                >
-                  <article className="flex flex-col gap-5 p-8 md:p-12 max-w-[580px]">
-                    <span className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--accent)] font-medium">
-                      {slide.kicker}
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={slide.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0, transition: spring }}
+                exit={{ opacity: 0, transition: { duration: 0.1 } }}
+                className="grid grid-cols-1 lg:grid-cols-[1fr_1.1fr]"
+              >
+                <article className="flex flex-col gap-5 p-8 md:p-12 max-w-[640px]">
+                  <span className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--accent)] font-medium">
+                    {slide.kicker}
+                  </span>
+                  <h2 className="display text-[30px] md:text-[38px] font-medium leading-[1.1] tracking-tight text-text">
+                    {slide.title}
+                  </h2>
+                  <p className="text-[14.5px] text-muted leading-[1.7]">{slide.blurb}</p>
+                  <div className="hairline-t pt-4 text-[13px] text-text leading-relaxed">
+                    <span className="text-[10.5px] uppercase tracking-[0.18em] text-subtle font-medium block mb-1.5">
+                      takeaway
                     </span>
-                    <h2 className="display text-[34px] md:text-[40px] font-medium leading-[1.08] tracking-tight">
-                      {slide.title}
-                    </h2>
-                    <p className="text-[14.5px] text-muted leading-[1.7]">{slide.blurb}</p>
-                    <div className="hairline-t pt-4 text-[12.5px] text-text leading-relaxed">
-                      <span className="text-[10.5px] uppercase tracking-[0.18em] text-subtle font-medium block mb-1.5">
-                        takeaway
-                      </span>
-                      {slide.takeaway}
+                    {slide.takeaway}
+                  </div>
+                  {slide.code ? (
+                    <pre className="mt-2 overflow-x-auto rounded-[var(--radius-md)] border border-[color:var(--border)] bg-elev-1 p-4 text-[12px] leading-relaxed font-mono text-muted">
+                      <code>{slide.code}</code>
+                    </pre>
+                  ) : null}
+                  {slide.sourcePath ? (
+                    <div className="flex items-center gap-2 text-[11px] text-subtle font-mono">
+                      <span className="inline-block size-1 rounded-full bg-[color:var(--trace)]" />
+                      {slide.sourcePath}
                     </div>
-                    {slide.code ? (
-                      <pre className="mt-2 overflow-x-auto rounded-[var(--radius-md)] border border-[color:var(--border)] bg-elev-1 p-4 text-[12px] leading-relaxed font-mono text-muted">
-                        <code>{slide.code}</code>
-                      </pre>
-                    ) : null}
-                    {slide.sourcePath ? (
-                      <div className="flex items-center gap-2 text-[11px] text-subtle font-mono">
-                        <span className="inline-block size-1 rounded-full bg-[color:var(--trace)]" />
-                        {slide.sourcePath}
-                      </div>
-                    ) : null}
-                  </article>
-                  <aside className="relative flex items-center justify-center p-8 md:p-12 min-h-[420px] bg-[oklch(13%_0.012_260)] border-l border-[color:var(--border)]">
-                    <div className="w-full max-w-[520px]">{slide.diagram}</div>
-                  </aside>
-                </motion.div>
-              </AnimatePresence>
-            </div>
+                  ) : null}
+                </article>
+                <aside className="relative flex items-center justify-center p-8 md:p-12 min-h-[480px] bg-[oklch(13%_0.012_260)] border-l border-[color:var(--border)]">
+                  <div className="w-full max-w-[520px]">{slide.diagram}</div>
+                </aside>
+              </motion.div>
+            </AnimatePresence>
           </div>
 
           <footer className="shrink-0 hairline-t flex items-center justify-between h-16 px-5 bg-elev-1">

@@ -269,6 +269,65 @@ const conciergeGiftPost: Beat = {
   steps: () => [{ kind: 'say', text: 'Framing is in the workspace. If it plays well with the recipient, I can fold in a brief, unannounced grid walk on the Saturday — a small surprise inside the larger one.' }],
 }
 
+// A catch-all for common refinement chips so the conversation stays in-flow
+// even when the user clicks a short label rather than typing a sentence.
+const conciergeRefineGeneric: Beat = {
+  id: 'concierge.f1.refine-generic',
+  match: (input) =>
+    !isPostTool(input) &&
+    matchUser(input, /best value|compare|cheaper|less expensive|ceremonial|quieter|closer to (venue|grounds|circuit)|more central|earlier date|alternate|alternative|family|sea.?facing|split (across|the)|up ?grade|downgrade|shortlist/i),
+  steps: (input) => {
+    const q = (input.messages.find((m) => m.role === 'user' && /best value|compare|cheaper|less expensive|ceremonial|quieter|closer|central|alternate|family|sea|split|up ?grade|shortlist/i.test(m.content))?.content ?? '').toLowerCase()
+    const lead =
+      /best value|cheaper|less expensive|shortlist/.test(q)
+        ? 'Tightening on value. The grandstand tier trims the most cost while keeping the Thursday walk; hotel stays at the marina but we drop a night of hospitality on Friday.'
+        : /compare/.test(q)
+          ? 'Putting the three side by side. Same group of four, same three nights — differences are in pit-lane access, lounge style, and the Saturday Q&A.'
+          : /ceremonial/.test(q)
+            ? 'Moving the landing to Emirates Palace. Further from the circuit, but the arrival is a moment in itself and the accessibility suite is full.'
+            : /quieter|central/.test(q)
+              ? 'Shifting to the Ritz-Carlton on the canal — calmer atmosphere, twelve minutes by transfer.'
+              : /closer/.test(q)
+                ? 'Tightening the radius to within a kilometre of the south paddock gate — keeps accessibility transfers short.'
+                : /up ?grade/.test(q)
+                  ? 'Walking the upgrade path. Paddock Club for two guests, Trophy for the others — keeps the group together for lunch, splits only for the pit-lane walk.'
+                  : /split/.test(q)
+                    ? 'Splitting the group: half in the Corporate Box, half in the Club House pavilion — matched by preference, reunited at dinner.'
+                    : /family/.test(q)
+                      ? 'Flagging for family-friendly — suites with adjoining rooms, kid-friendly pacing on day two.'
+                      : 'Noted. Re-running the relevant shortlist now.'
+    return [
+      { kind: 'say', text: lead + ' ', gapMs: 80 },
+      {
+        kind: 'toolCall',
+        name: 'agent.Experience',
+        args: { task: `Refine F1 Abu Dhabi hospitality to match: ${q}` },
+        id: 'call.refine.exp',
+      },
+      {
+        kind: 'toolCall',
+        name: 'agent.Logistics',
+        args: { task: `Refine F1 Abu Dhabi hotel shortlist to match: ${q}` },
+        id: 'call.refine.log',
+      },
+    ]
+  },
+}
+
+const conciergeRefineGenericPost: Beat = {
+  id: 'concierge.f1.refine-generic-post',
+  match: (input) => {
+    const last = lastMessage(input)
+    const hasRefineUser = input.messages.some(
+      (m) => m.role === 'user' && /best value|compare|cheaper|less expensive|ceremonial|quieter|closer|central|alternate|family|sea|split|up ?grade|shortlist/i.test(m.content),
+    )
+    return isPostTool(input) && hasRefineUser && (last?.toolName === 'agent.Experience' || last?.toolName === 'agent.Logistics')
+  },
+  steps: () => [
+    { kind: 'say', text: 'Updated in the workspace. The rest of the plan stays as is — we can keep iterating, or say proceed when you are ready.' },
+  ],
+}
+
 const conciergeDossier: Beat = {
   id: 'concierge.f1.dossier',
   match: (input) =>
@@ -684,6 +743,8 @@ export const f1AbuDhabiScript: ScenarioScript = {
       conciergeGift,
       conciergeGiftPost,
       conciergeDossier,
+      conciergeRefineGeneric,
+      conciergeRefineGenericPost,
       conciergeIntro,
       conciergeAssemble,
     ],
