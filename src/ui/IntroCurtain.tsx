@@ -1,31 +1,13 @@
 /**
- * IntroCurtain — a quiet first-load overture.
+ * IntroCurtain — a quiet overture shown on every hard reload.
  *
- * Shows once per browser (persisted in localStorage). Breathes, draws a
- * hairline beneath the wordmark, reveals four capability words, then
- * invites the guest to step inside. Enter / space key also triggers.
+ * Breathes, draws a hairline beneath the wordmark, reveals four capability
+ * words, then invites the guest to step inside. Enter / space key also
+ * triggers. Deliberately not persisted — each demo starts fresh.
  */
 
 import { useEffect } from 'react'
 import { motion, type Variants } from 'motion/react'
-
-const INTRO_KEY = 'agentic-concierge:intro-seen'
-
-export function hasSeenIntro(): boolean {
-  try {
-    return localStorage.getItem(INTRO_KEY) === '1'
-  } catch {
-    return true
-  }
-}
-
-export function markIntroSeen(): void {
-  try {
-    localStorage.setItem(INTRO_KEY, '1')
-  } catch {
-    /* ignore */
-  }
-}
 
 const fade: Variants = {
   hidden: { opacity: 0, y: 8 },
