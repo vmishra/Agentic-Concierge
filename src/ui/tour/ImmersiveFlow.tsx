@@ -397,20 +397,25 @@ function ConciergeHub({ show, pulse }: { show: number; pulse: number }) {
 
 function SkillsLayer({ show, active }: { show: number; active: number }) {
   const skills = ['event-catalog', 'hospitality-tiers', 'travel-logistics', 'dietary-accessibility', 'human-in-the-loop']
+  // 5 pills × 190 wide + 4 × 14 gap = 1006; centred in 1200 → start at 97.
+  const W = 190
+  const GAP = 14
+  const totalW = skills.length * W + (skills.length - 1) * GAP
+  const startX = (1200 - totalW) / 2
+  const y = 180
   return (
     <g style={{ opacity: show }}>
       {skills.map((s, i) => {
-        const x = 220 + i * 160
-        const y = 180
+        const x = startX + i * (W + GAP)
         return (
           <g key={s} style={{ opacity: clamp(show - i * 0.12, 0, 1) }}>
-            <rect x={x} y={y} width={140} height={38} rx={19} fill="oklch(20% 0.012 260)" stroke={TRACE} strokeWidth={0.8} filter={active > 0 ? 'url(#iGlow)' : undefined} />
-            <circle cx={x + 14} cy={y + 19} r={3} fill={TRACE} />
-            <text x={x + 28} y={y + 23} fontSize="11" fill={TRACE} fontFamily="Geist Mono, ui-monospace, monospace">
+            <rect x={x} y={y} width={W} height={40} rx={20} fill="oklch(20% 0.012 260)" stroke={TRACE} strokeWidth={0.8} filter={active > 0 ? 'url(#iGlow)' : undefined} />
+            <circle cx={x + 16} cy={y + 20} r={3} fill={TRACE} />
+            <text x={x + W / 2 + 6} y={y + 25} fontSize="10.5" fill={TRACE} textAnchor="middle" fontFamily="Geist Mono, ui-monospace, monospace">
               {s}
             </text>
             {/* connector to hub */}
-            <line x1={x + 70} y1={y + 38} x2={600} y2={280} stroke={TRACE} strokeWidth={0.6} strokeDasharray="2 4" strokeOpacity={0.6} style={active > 0 ? { animation: `flowDashFast ${2.1 + i * 0.15}s linear infinite` } : undefined} />
+            <line x1={x + W / 2} y1={y + 40} x2={600} y2={280} stroke={TRACE} strokeWidth={0.6} strokeDasharray="2 4" strokeOpacity={0.6} style={active > 0 ? { animation: `flowDashFast ${2.1 + i * 0.15}s linear infinite` } : undefined} />
           </g>
         )
       })}
@@ -419,25 +424,41 @@ function SkillsLayer({ show, active }: { show: number; active: number }) {
 }
 
 function MemoryLayer({ show, active }: { show: number; active: number }) {
+  // Panel: x=890, y=380, width=260, height=200 → bottom 580, fits inside the stage.
+  const px = 890
+  const py = 380
+  const pw = 260
+  const ph = 200
   const facts = [
-    { y: 440, text: 'vegan for guest 2', hit: true },
-    { y: 468, text: 'business-class before midnight', hit: false },
-    { y: 496, text: 'gluten-free for guest 5', hit: true },
-    { y: 524, text: 'prefers 2 adjoining suites', hit: false },
+    { y: py + 74, text: 'vegan for guest 2', hit: true },
+    { y: py + 104, text: 'business-class before midnight', hit: false },
+    { y: py + 134, text: 'gluten-free for guest 5', hit: true },
+    { y: py + 164, text: 'prefers 2 adjoining suites', hit: false },
   ]
   return (
     <g style={{ opacity: show }}>
-      <rect x={900} y={400} width={240} height={160} rx={14} fill="oklch(16% 0.012 260)" stroke="oklch(32% 0.012 260)" strokeWidth={0.8} />
-      <text x={916} y={424} fontSize="10" letterSpacing="2.2" fill={SUBTLE}>
+      <rect x={px} y={py} width={pw} height={ph} rx={14} fill="oklch(16% 0.012 260)" stroke="oklch(32% 0.012 260)" strokeWidth={0.8} />
+      <text x={px + 20} y={py + 28} fontSize="10" letterSpacing="2.4" fill={SUBTLE} fontWeight={500}>
         LONG-TERM MEMORY
       </text>
-      <text x={916} y={438} fontSize="8.5" fill={SUBTLE} letterSpacing="1.2">
+      <text x={px + 20} y={py + 48} fontSize="9" fill={SUBTLE} letterSpacing="1.2" fontFamily="Geist Mono, ui-monospace, monospace">
         gemini-embedding-2
       </text>
+      <line x1={px + 20} y1={py + 60} x2={px + pw - 20} y2={py + 60} stroke="oklch(28% 0.01 260)" strokeWidth={0.5} />
       {facts.map((f, i) => (
         <g key={i} style={{ opacity: clamp(show - 0.1 * i, 0, 1) }}>
-          <rect x={912} y={f.y} width={216} height={22} rx={6} fill={f.hit ? `color-mix(in oklab, ${ACCENT} 20%, transparent)` : 'transparent'} stroke={f.hit ? ACCENT : 'oklch(28% 0.01 260)'} strokeWidth={f.hit ? 1 : 0.5} filter={f.hit && active > 0 ? 'url(#iGlow)' : undefined} />
-          <text x={924} y={f.y + 15} fontSize="10" fill={f.hit ? ACCENT : MUTED}>
+          <rect
+            x={px + 14}
+            y={f.y}
+            width={pw - 28}
+            height={24}
+            rx={6}
+            fill={f.hit ? `color-mix(in oklab, ${ACCENT} 20%, transparent)` : 'transparent'}
+            stroke={f.hit ? ACCENT : 'oklch(28% 0.01 260)'}
+            strokeWidth={f.hit ? 1 : 0.5}
+            filter={f.hit && active > 0 ? 'url(#iGlow)' : undefined}
+          />
+          <text x={px + 26} y={f.y + 16} fontSize="10" fill={f.hit ? ACCENT : MUTED}>
             {f.text}
           </text>
         </g>
@@ -446,7 +467,7 @@ function MemoryLayer({ show, active }: { show: number; active: number }) {
       {facts.filter((f) => f.hit).map((f, i) => (
         <path
           key={`arc-${i}`}
-          d={`M 680 340 C 780 340, 830 ${f.y + 11}, 910 ${f.y + 11}`}
+          d={`M 680 340 C 780 340, 830 ${f.y + 12}, ${px + 4} ${f.y + 12}`}
           stroke={ACCENT}
           strokeWidth={1.1}
           strokeDasharray="2 5"
