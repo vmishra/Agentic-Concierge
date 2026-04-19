@@ -33,7 +33,7 @@ const intro: Beat = {
     { kind: 'toolCall', name: 'agent.Researcher', args: { task: 'Confirm the Wankhede Test window and weather risk.' }, id: 'c.r' },
     { kind: 'toolCall', name: 'agent.Logistics', args: { task: 'Shortlist South Mumbai hotels for a corporate group of 10.' }, id: 'c.l' },
     { kind: 'toolCall', name: 'agent.Experience', args: { task: 'Hospitality options at Wankhede for 10 guests with mixed preferences.' }, id: 'c.e' },
-    { kind: 'toolCall', name: 'agent.Budget', args: { task: 'Test match corporate hospitality baseline for 10 guests, 3 days.' }, id: 'c.b' },
+    { kind: 'toolCall', name: 'agent.Budget', args: { task: 'Cricket Test match corporate hospitality baseline for 10 guests, 3 days at Wankhede.' }, id: 'c.b' },
   ],
 }
 

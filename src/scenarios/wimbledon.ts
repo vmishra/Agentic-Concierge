@@ -51,7 +51,7 @@ const intro: Beat = {
     {
       kind: 'toolCall',
       name: 'agent.Budget',
-      args: { task: 'Wimbledon family package baseline for 3 adults + 3 children, 5 nights.' },
+      args: { task: 'Wimbledon tennis family package baseline for 3 adults + 3 children, 5 nights.' },
       id: 'w.b',
     },
   ],

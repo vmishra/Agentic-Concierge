@@ -54,7 +54,7 @@ const conciergeIntro: Beat = {
       kind: 'toolCall',
       name: 'agent.Researcher',
       args: {
-        task: 'Confirm the F1 Abu Dhabi weekend and summarise the right window for arrival and departure.',
+        task: 'Research the F1 Abu Dhabi weekend — confirm window, accessibility, and paddock access.',
         notes: '4 guests, late November 2025, one uses a wheelchair.',
       },
       id: 'call.research',
@@ -63,7 +63,7 @@ const conciergeIntro: Beat = {
       kind: 'toolCall',
       name: 'agent.Logistics',
       args: {
-        task: 'Shortlist hotels within reach of Yas Marina that can offer step-free rooms.',
+        task: 'Shortlist hotels in Abu Dhabi, near Yas Marina, step-free.',
         notes: 'Group of 4, accessibility needed, three nights.',
       },
       id: 'call.logistics',
@@ -72,7 +72,7 @@ const conciergeIntro: Beat = {
       kind: 'toolCall',
       name: 'agent.Experience',
       args: {
-        task: 'Propose hospitality tiers for the F1 Abu Dhabi weekend.',
+        task: 'Propose hospitality tiers for F1 Abu Dhabi weekend.',
         notes: 'Budget ~₹50L total; accessibility must be guaranteed.',
       },
       id: 'call.experience',
@@ -81,7 +81,7 @@ const conciergeIntro: Beat = {
       kind: 'toolCall',
       name: 'agent.Budget',
       args: {
-        task: 'Build a pricing breakdown sized for 4 guests, 3 nights, mid-tier hospitality.',
+        task: 'Price breakdown for F1 Abu Dhabi, 4 guests, 3 nights, mid-tier hospitality.',
         notes: 'Cap ₹50L; call out upgrade and downgrade paths.',
       },
       id: 'call.budget',
