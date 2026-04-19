@@ -548,35 +548,47 @@ function ToolOrbit({ show, active: _active, elapsed }: { show: number; active: n
 }
 
 function ResearchLoop({ show, elapsed }: { show: number; elapsed: number }) {
-  // Position near Researcher (top-left area)
+  // Positioned in the clear band between the context-budget bar (≈y=286)
+  // and the user prompt box (y=520). Keeps the centre of the stage free
+  // for the coordinator and the specialist ring.
   const steps = ['plan', 'search', 'critique', 'refine']
-  const cy = 120
-  // which step is active?
+  const panelX = 40
+  const panelY = 320
+  const panelW = 360
+  const panelH = 170
+  const stepY = panelY + 70
   const t = Math.max(0, elapsed - 22.5)
   const activeIdx = Math.min(steps.length - 1, Math.floor(t / 0.9))
   return (
     <g style={{ opacity: show }}>
-      <rect x={40} y={60} width={360} height={140} rx={14} fill="oklch(17% 0.012 260)" stroke={TRACE} strokeWidth={0.8} filter="url(#iGlow)" />
-      <text x={60} y={84} fontSize="10" letterSpacing="2.2" fill={SUBTLE}>
+      <rect x={panelX} y={panelY} width={panelW} height={panelH} rx={14} fill="oklch(17% 0.012 260)" stroke={TRACE} strokeWidth={0.8} filter="url(#iGlow)" />
+      <text x={panelX + 20} y={panelY + 24} fontSize="10" letterSpacing="2.2" fill={SUBTLE}>
         DEEP RESEARCH · LoopAgent
       </text>
+      <text x={panelX + 20} y={panelY + 42} fontSize="9" fill={SUBTLE} letterSpacing="1.2">
+        agent workflow
+      </text>
       {steps.map((s, i) => {
-        const x = 66 + i * 82
+        const x = panelX + 26 + i * 82
         const on = i <= activeIdx
         return (
           <g key={s}>
-            <rect x={x} y={cy - 12} width={72} height={28} rx={14} fill={on ? `color-mix(in oklab, ${ACCENT} 20%, transparent)` : 'transparent'} stroke={on ? ACCENT : 'oklch(34% 0.01 260)'} strokeWidth={on ? 1 : 0.6} filter={on ? 'url(#iGlow)' : undefined} />
-            <text x={x + 36} y={cy + 5} fontSize="10" fill={on ? ACCENT : MUTED} textAnchor="middle" fontWeight={on ? 500 : 400}>
+            <rect x={x} y={stepY - 12} width={72} height={28} rx={14} fill={on ? `color-mix(in oklab, ${ACCENT} 20%, transparent)` : 'transparent'} stroke={on ? ACCENT : 'oklch(34% 0.01 260)'} strokeWidth={on ? 1 : 0.6} filter={on ? 'url(#iGlow)' : undefined} />
+            <text x={x + 36} y={stepY + 5} fontSize="10" fill={on ? ACCENT : MUTED} textAnchor="middle" fontWeight={on ? 500 : 400}>
               {s}
             </text>
             {i < steps.length - 1 ? (
-              <path d={`M ${x + 74} ${cy + 2} L ${x + 82} ${cy + 2}`} stroke={on ? ACCENT : 'oklch(34% 0.01 260)'} strokeWidth={1} markerEnd="url(#iAr)" />
+              <path d={`M ${x + 74} ${stepY + 2} L ${x + 82} ${stepY + 2}`} stroke={on ? ACCENT : 'oklch(34% 0.01 260)'} strokeWidth={1} markerEnd="url(#iAr)" />
             ) : null}
           </g>
         )
       })}
-      <text x={60} y={184} fontSize="10" fill={SUBTLE} fontFamily="Geist Mono, ui-monospace, monospace">
+      <line x1={panelX + 20} y1={stepY + 36} x2={panelX + panelW - 20} y2={stepY + 36} stroke="oklch(28% 0.01 260)" strokeWidth={0.5} />
+      <text x={panelX + 20} y={stepY + 58} fontSize="10" fill={SUBTLE} fontFamily="Geist Mono, ui-monospace, monospace">
         research_scratchpad · 4 sub-questions
+      </text>
+      <text x={panelX + 20} y={stepY + 74} fontSize="9" fill={SUBTLE} fontFamily="Geist Mono, ui-monospace, monospace" opacity={0.7}>
+        findings · citations · coverage check
       </text>
     </g>
   )
