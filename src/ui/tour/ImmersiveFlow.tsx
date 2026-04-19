@@ -109,9 +109,12 @@ export function ImmersiveFlow({ open, onOpenChange }: { open: boolean; onOpenCha
           {/* Starfield + grid floor */}
           <BackgroundScene />
 
-          {/* Main scene */}
-          <div className="relative flex-1 min-h-0 flex items-center justify-center">
-            <Scene key={runId} elapsed={elapsed} />
+          {/* Main scene — with safe-area padding so the stage never collides
+              with the act-title overlay at top or the timeline at bottom. */}
+          <div className="relative flex-1 min-h-0">
+            <div className="absolute inset-0 pt-36 pb-24 px-8">
+              <Scene key={runId} elapsed={elapsed} />
+            </div>
           </div>
 
           {/* Act label overlay */}
@@ -121,23 +124,23 @@ export function ImmersiveFlow({ open, onOpenChange }: { open: boolean; onOpenCha
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } }}
               exit={{ opacity: 0, y: -6, transition: { duration: 0.3 } }}
-              className="absolute left-10 top-10 pointer-events-none"
+              className="absolute left-8 top-6 pointer-events-none z-10"
             >
-              <div className="text-[10.5px] uppercase tracking-[0.32em] text-[color:var(--accent)] font-medium mb-3 font-mono">
+              <div className="text-[10.5px] uppercase tracking-[0.32em] text-[color:var(--accent)] font-medium mb-2 font-mono">
                 act {String(ACTS.indexOf(activeAct) + 1).padStart(2, '0')} · of {ACTS.length}
               </div>
               <div
-                className="text-[38px] md:text-[46px] leading-[1.1] font-semibold tracking-[-0.015em] text-text max-w-[680px]"
+                className="text-[28px] md:text-[32px] leading-[1.1] font-semibold tracking-[-0.015em] text-text max-w-[560px]"
                 style={{ fontFamily: 'var(--font-sans)' }}
               >
                 {activeAct.label}
               </div>
-              <div className="mt-3 text-[13.5px] text-muted font-mono tracking-[-0.005em]">{activeAct.sub}</div>
+              <div className="mt-2 text-[12.5px] text-muted font-mono tracking-[-0.005em]">{activeAct.sub}</div>
             </motion.div>
           </AnimatePresence>
 
           {/* Controls */}
-          <div className="absolute right-10 top-10 flex items-center gap-2">
+          <div className="absolute right-8 top-6 flex items-center gap-2 z-10">
             <button
               type="button"
               onClick={() => setPlaying((p) => !p)}
