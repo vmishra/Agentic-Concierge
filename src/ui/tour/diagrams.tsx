@@ -206,7 +206,7 @@ export function OvertureDiagram() {
         />
       </motion.g>
 
-      {/* Parallel fan-out arrows from Coordinator → specialists */}
+      {/* Parallel fan-out arrows — drawn after all 5 specialists have settled. */}
       {specialists.map((s, i) => (
         <g key={`arrow-${i}`}>
           <motion.path
@@ -215,7 +215,7 @@ export function OvertureDiagram() {
             strokeWidth={0.8}
             fill="none"
             variants={drawLine}
-            style={{ transitionDelay: `${0.55 + i * 0.08}s` }}
+            style={{ transitionDelay: `${1.65 + i * 0.08}s` }}
           />
           <path
             d={`M ${coordX + 140} ${coordY} C ${coordX + 200} ${coordY} ${specX - 60} ${s.y + 20} ${specX - 8} ${s.y + 20}`}
@@ -232,7 +232,7 @@ export function OvertureDiagram() {
 
       {/* Specialist nodes */}
       {specialists.map((s, i) => (
-        <motion.g key={s.name} variants={popIn} style={{ transitionDelay: `${0.65 + i * 0.08}s` }}>
+        <motion.g key={s.name} variants={popIn} style={{ transitionDelay: `${0.95 + i * 0.1}s` }}>
           <rect x={specX} y={s.y} width={140} height={40} rx={10} fill={SOFT} stroke={BORDER} strokeWidth={0.8} />
           <circle
             cx={specX + 14}
@@ -251,27 +251,11 @@ export function OvertureDiagram() {
         </motion.g>
       ))}
 
-      {/* Specialists → artifacts — return flow in TRACE colour */}
-      {specialists.map((s, i) => (
-        <g key={`return-${i}`}>
-          <motion.path
-            d={`M ${specX + 140} ${s.y + 20} L ${artX - 8} ${s.y + 20}`}
-            stroke={TRACE}
-            strokeWidth={1.1}
-            strokeDasharray="2 5"
-            fill="none"
-            filter="url(#glow)"
-            variants={drawLine}
-            style={{ transitionDelay: `${1.0 + i * 0.08}s`, animation: `flowDash ${1.6 + i * 0.2}s linear infinite` }}
-          />
-        </g>
-      ))}
-
-      {/* Artifact column — 5 small cards */}
+      {/* Artifact column — 5 small cards appear first, then the return arrows. */}
       {specialists.map((s, i) => {
         const kinds = ['research_scratchpad', 'option_card_grid', 'option_card_grid', 'pricing_breakdown', 'note']
         return (
-          <motion.g key={`art-${i}`} variants={popIn} style={{ transitionDelay: `${1.2 + i * 0.08}s` }}>
+          <motion.g key={`art-${i}`} variants={popIn} style={{ transitionDelay: `${2.7 + i * 0.1}s` }}>
             <rect x={artX} y={s.y} width={56} height={40} rx={6} fill={SOFT2} stroke={TRACE} strokeWidth={0.8} filter="url(#glow)" />
             <rect x={artX + 6} y={s.y + 8} width={44} height={5} rx={1} fill={TRACE} opacity={0.6} />
             <rect x={artX + 6} y={s.y + 17} width={34} height={3} rx={1} fill={MUTED} opacity={0.5} />
@@ -283,6 +267,22 @@ export function OvertureDiagram() {
           </motion.g>
         )
       })}
+
+      {/* Specialists → artifacts — return flow, drawn after artifact cards appear. */}
+      {specialists.map((s, i) => (
+        <g key={`return-${i}`}>
+          <motion.path
+            d={`M ${specX + 140} ${s.y + 20} L ${artX - 8} ${s.y + 20}`}
+            stroke={TRACE}
+            strokeWidth={1.1}
+            strokeDasharray="2 5"
+            fill="none"
+            filter="url(#glow)"
+            variants={drawLine}
+            style={{ transitionDelay: `${3.3 + i * 0.08}s`, animation: `flowDash ${2.8 + i * 0.35}s linear infinite` }}
+          />
+        </g>
+      ))}
 
       {/* Bottom annotation band — the named technologies */}
       <motion.g variants={fadeUp} style={{ transitionDelay: '1.5s' }}>
@@ -1013,7 +1013,7 @@ export function HierarchyDiagram() {
 
       {/* L3 nodes — sub-steps / nested tool workflows */}
       {L3.map((c, i) => (
-        <motion.g key={`leaf-${i}`} variants={popIn} style={{ transitionDelay: `${0.85 + i * 0.08}s` }}>
+        <motion.g key={`leaf-${i}`} variants={popIn} style={{ transitionDelay: `${1.9 + i * 0.1}s` }}>
           <rect x={c.x} y={c.y} width={72} height={24} rx={6} fill="transparent" stroke={TRACE} strokeWidth={0.7} strokeDasharray="2 3" />
           <text x={c.x + 36} y={c.y + 15} fontSize="9.5" fill={TRACE} textAnchor="middle" fontFamily="Geist Mono, ui-monospace, monospace">
             {c.name}
