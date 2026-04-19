@@ -365,7 +365,7 @@ const conciergeRefineGenericPost: Beat = {
 const conciergeDossier: Beat = {
   id: 'concierge.f1.dossier-confirm',
   match: (input) =>
-    !isPostTool(input) && matchUser(input, /proceed|confirm|book|lock|go ahead|let.?s (do|go)/i) && isScenario(input, 'f1'),
+    !isPostTool(input) && matchUser(input, /proceed|confirm|book|lock|go ahead|let.?s (do|go)|finali[sz]e|wrap\s*up|issue\s+(the\s+)?dossier|\bdone\b|\bthat.?s it\b|looks good|ship it/i) && isScenario(input, 'f1'),
   steps: () => {
     const tiers = hospitalityForEvent(EVENT_ID)
     const chosen: HospitalityTier = tiers[1]!

@@ -216,18 +216,28 @@ function QuickReplies({ onPick }: { onPick: (t: string) => void }) {
   const messages = useApp((s) => s.messages)
 
   const chips = useMemo(() => {
+    // Always offer a Proceed chip at the end so the guest can finalise
+    // without getting caught in the refinement loop.
+    const proceed = { id: 'qr.proceed', label: 'Proceed', tone: 'accent' as const, prompt: 'Proceed' }
+
     // Pull the freshest artifact with refinements.
     for (let i = artifacts.length - 1; i >= 0; i--) {
       const a = artifacts[i]!
-      if ('refinements' in a && a.refinements && a.refinements.length) return a.refinements
-      if (a.kind === 'refinement_chips') return a.chips
+      if ('refinements' in a && a.refinements && a.refinements.length) {
+        const base = a.refinements.filter((c) => !/^proceed$/i.test(c.label))
+        return [...base, proceed]
+      }
+      if (a.kind === 'refinement_chips') {
+        const base = a.chips.filter((c) => !/^proceed$/i.test(c.label))
+        return [...base, proceed]
+      }
     }
     // Fallback universal set — shown before any refinable artifact exists.
     return [
-      { id: 'qr.closer', label: 'Closer to the pit lane', tone: 'accent' as const },
+      { id: 'qr.closer', label: 'Closer to the pit lane' },
       { id: 'qr.driver', label: 'Any driver meet windows?' },
       { id: 'qr.gift', label: 'Frame as a gift' },
-      { id: 'qr.proceed', label: 'Proceed' },
+      proceed,
     ]
   }, [artifacts])
 
@@ -240,7 +250,7 @@ function QuickReplies({ onPick }: { onPick: (t: string) => void }) {
         <span className="text-[10px] uppercase tracking-[0.16em] text-subtle font-medium">suggested</span>
       </div>
       <div className="flex flex-wrap gap-1.5">
-        {chips.slice(0, 5).map((c) => (
+        {chips.slice(0, 6).map((c) => (
           <button
             key={c.id}
             type="button"

@@ -163,7 +163,13 @@ const closerPost: Beat = {
 
 const dossier: Beat = {
   id: 'concierge.wim.dossier',
-  match: (input) => !isPostTool(input) && matchUser(input, /wimbledon/i) && matchUser(input, /proceed|confirm|book|lock|go ahead|let.?s (do|go)/i),
+  match: (input) =>
+    !isPostTool(input) &&
+    isScenario(input, 'wim') &&
+    matchUser(
+      input,
+      /proceed|confirm|book|lock|go ahead|let.?s (do|go)|finali[sz]e|wrap\s*up|issue\s+(the\s+)?dossier|\bdone\b|\bthat.?s it\b|looks good|ship it/i,
+    ),
   steps: () => {
     const tier = hospitalityForEvent(EVENT_ID)[0]!
     const hotel = hotelsIn(CITY).find((h) => h.id === 'ld-connaught')!
