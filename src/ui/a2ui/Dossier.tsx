@@ -1,5 +1,6 @@
 import type { A2UIArtifact } from '@/adk/a2ui'
 import { CardHeader, SurfaceCard } from './_common'
+import { DossierShareAffordance } from './DossierShare'
 
 type Props = { artifact: Extract<A2UIArtifact, { kind: 'dossier' }> }
 
@@ -25,6 +26,7 @@ export function Dossier({ artifact }: Props) {
           </section>
         ))}
       </div>
+      <DossierShareAffordance artifact={artifact} />
     </SurfaceCard>
   )
 }

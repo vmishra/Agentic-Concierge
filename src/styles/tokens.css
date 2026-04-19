@@ -150,6 +150,32 @@ body {
   border-right: 1px solid var(--border);
 }
 
+/*
+ * Print — used by the dossier share preview so the paper prints cleanly.
+ * Everything except #dossier-paper is hidden; the paper is repositioned
+ * to the page top-left. Works with Radix Dialog.Portal under body.
+ */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #dossier-paper,
+  #dossier-paper * {
+    visibility: visible;
+  }
+  #dossier-paper {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    transform: none !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    box-shadow: none !important;
+    background: oklch(98% 0.004 82) !important;
+  }
+}
+
 /* Subtle grain — a single static SVG noise, used sparingly on panels. */
 .grain {
   position: relative;
