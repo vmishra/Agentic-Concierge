@@ -1,4 +1,6 @@
 import { Topbar } from './Topbar'
+import { ChatPane } from './ChatPane'
+import { Workspace } from './Workspace'
 
 export function Shell() {
   return (
@@ -6,14 +8,10 @@ export function Shell() {
       <Topbar />
       <div className="flex min-h-0 flex-1">
         <aside className="hairline-r flex w-[380px] min-w-[340px] flex-col bg-elev-1">
-          <div className="flex flex-1 items-center justify-center p-8">
-            <p className="text-subtle text-sm">chat pane</p>
-          </div>
+          <ChatPane />
         </aside>
         <main className="relative flex min-w-0 flex-1 flex-col bg-surface grain">
-          <div className="flex flex-1 items-center justify-center p-8">
-            <p className="text-subtle text-sm">workspace</p>
-          </div>
+          <Workspace />
         </main>
       </div>
     </div>
