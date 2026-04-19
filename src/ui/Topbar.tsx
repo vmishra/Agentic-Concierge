@@ -3,6 +3,7 @@ import { Settings2 } from 'lucide-react'
 import { useApp } from '@/state/store'
 import { cn } from '@/lib/cn'
 import { SettingsSheet } from './SettingsSheet'
+import { ArchitectureTourButton } from './tour/ArchitectureTour'
 
 export function Topbar() {
   const [open, setOpen] = useState(false)
@@ -22,6 +23,7 @@ export function Topbar() {
         <div className="flex items-center gap-2.5">
           <ContextMeter pct={pct} used={tokensUsed} budget={tokenBudget} />
           <ModePill mode={mode} label={providerLabel} />
+          <ArchitectureTourButton />
           <button
             type="button"
             className="text-muted hover:text-text hover:bg-elev-1 rounded-md p-2 transition-colors"
