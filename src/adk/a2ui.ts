@@ -119,6 +119,23 @@ export type A2UIArtifact =
       body: string
       tone?: 'neutral' | 'accent' | 'success' | 'warning'
     }
+  | {
+      /**
+       * Human-in-the-loop approval gate. Rendered with Approve/Deny
+       * buttons; clicking either resolves the HitlBus request keyed
+       * by `requestId`, so the waiting `request_approval` tool call
+       * can return a decision and the agent turn can resume.
+       */
+      kind: 'approval_request'
+      id: string
+      requestId: string
+      title: string
+      body?: string
+      approveLabel?: string
+      denyLabel?: string
+      meta?: { label: string; value: string }[]
+      state?: 'pending' | 'approved' | 'denied'
+    }
 
 export type A2UIKind = A2UIArtifact['kind']
 

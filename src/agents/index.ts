@@ -77,7 +77,7 @@ export function buildAgents(_opts: BuildAgentOptions) {
     shortName: 'concierge',
     description:
       'The voice of the service. Orchestrates specialists, holds the guest\'s intent, and assembles the final itinerary, pricing, and dossier.',
-    skills: ['event-catalog', 'dietary-accessibility'],
+    skills: ['event-catalog', 'dietary-accessibility', 'human-in-the-loop'],
     subAgents: [researcher, logistics, experience, budget, personalizer],
     thinking: 'high',
     systemPrompt: [

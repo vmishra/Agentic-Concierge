@@ -331,25 +331,95 @@ const conciergeRefineGenericPost: Beat = {
   ],
 }
 
+// When the guest says "proceed", we pause for an explicit human decision —
+// ADK's request_approval pattern. The ApprovalCard appears in the workspace
+// with Approve / Not yet buttons; the agent turn blocks on the HitlBus
+// until the user clicks. Only after approval do we emit the dossier.
 const conciergeDossier: Beat = {
-  id: 'concierge.f1.dossier',
+  id: 'concierge.f1.dossier-confirm',
   match: (input) =>
-    !isPostTool(input) && matchUser(input, /proceed|confirm|book|lock|go ahead|let.?s (do|go)/i),
-  steps: (input) => {
+    !isPostTool(input) && matchUser(input, /proceed|confirm|book|lock|go ahead|let.?s (do|go)/i) && isScenario(input, 'f1'),
+  steps: () => {
     const tiers = hospitalityForEvent(EVENT_ID)
     const chosen: HospitalityTier = tiers[1]!
     const hotels = accessibleHotelsIn(CITY)
     const hotel: Hotel = hotels[0]!
-    const lines = [
-      { label: 'Hospitality · Trophy lounge, 4 guests × 3 days', amount: scaleM(chosen.perPerson, 4) },
-      { label: 'Hotel · Waldorf Astoria, 3 nights', amount: scaleM(hotel.nightlyFrom, 3), detail: 'Step-free suite + adjoining room', tone: 'neutral' as const },
+    const lines: { label: string; amount: Money; detail?: string; tone?: 'neutral' | 'accent' | 'muted' }[] = [
+      { label: `Hospitality · ${chosen.name}, 4 guests × 3 days`, amount: scaleM(chosen.perPerson, 4) },
+      { label: `Hotel · ${hotel.name}, 3 nights`, amount: scaleM(hotel.nightlyFrom, 3), detail: 'Step-free suite + adjoining room' },
       { label: 'Flights · Mumbai ⇄ Abu Dhabi, business', amount: { amount: 72_000 * 4 * 2, currency: 'INR' as const } },
-      { label: 'Accessible transfers + hospitality fees', amount: { amount: 180_000, currency: 'INR' as const }, tone: 'muted' as const },
+      { label: 'Accessible transfers + hospitality fees', amount: { amount: 180_000, currency: 'INR' as const }, tone: 'muted' },
     ]
     const total = sum(lines.map((l) => l.amount))
-    const userAsked = input.messages[input.messages.length - 1]?.content ?? ''
+    const requestId = artifactId('hitl.f1.dossier')
     return [
-      { kind: 'say', text: `Putting the dossier together now. It carries the arrangements, the kept-in-mind notes, and what happens next — forward-able as is${userAsked ? '' : ''}. `, gapMs: 100 },
+      { kind: 'say', text: 'Before I issue the dossier and place the holds, I need your explicit sign-off on the arrangement. ', gapMs: 120 },
+      { kind: 'trace', event: { kind: 'skill.load', skill: 'human-in-the-loop', tools: ['request_approval'] } },
+      {
+        kind: 'artifact',
+        artifact: {
+          kind: 'approval_request',
+          id: artifactId('approval.f1'),
+          requestId,
+          title: 'Confirm — Abu Dhabi Grand Prix weekend',
+          body: 'Holding the Friday pit-lane walk and the Trophy hospitality for 48 hours. Approval will trigger per-guest confirmations and a single consolidated invoice.',
+          approveLabel: 'Approve and proceed',
+          denyLabel: 'Not yet',
+          meta: [
+            { label: 'guests', value: '4' },
+            { label: 'nights', value: '3' },
+            { label: 'window', value: '28–30 Nov 2025' },
+            { label: 'total', value: fmt(total) },
+          ],
+          state: 'pending',
+        },
+      },
+      { kind: 'toolCall', name: 'request_approval', args: { requestId, title: 'Abu Dhabi dossier', body: 'Please confirm.' }, id: `call.${requestId}` },
+    ]
+  },
+}
+
+const conciergeDossierPost: Beat = {
+  id: 'concierge.f1.dossier-post',
+  match: (input) => {
+    const last = lastMessage(input)
+    return (
+      isPostTool(input) &&
+      last?.toolName === 'request_approval' &&
+      isScenario(input, 'f1')
+    )
+  },
+  steps: (input) => {
+    // Read the approval result from the tool message
+    const last = lastMessage(input)
+    let approved = true
+    try {
+      const parsed = last ? (JSON.parse(last.content) as { approved?: boolean }) : {}
+      approved = parsed.approved ?? false
+    } catch { approved = false }
+
+    if (!approved) {
+      return [
+        {
+          kind: 'say',
+          text: 'Understood — we will not proceed yet. I will keep the shortlists in place; tell me what should change and I will revise without redoing the rest.',
+        },
+      ]
+    }
+
+    const tiers = hospitalityForEvent(EVENT_ID)
+    const chosen: HospitalityTier = tiers[1]!
+    const hotels = accessibleHotelsIn(CITY)
+    const hotel: Hotel = hotels[0]!
+    const lines: { label: string; amount: Money; detail?: string; tone?: 'neutral' | 'accent' | 'muted' }[] = [
+      { label: `Hospitality · ${chosen.name}, 4 guests × 3 days`, amount: scaleM(chosen.perPerson, 4) },
+      { label: `Hotel · ${hotel.name}, 3 nights`, amount: scaleM(hotel.nightlyFrom, 3), detail: 'Step-free suite + adjoining room' },
+      { label: 'Flights · Mumbai ⇄ Abu Dhabi, business', amount: { amount: 72_000 * 4 * 2, currency: 'INR' as const } },
+      { label: 'Accessible transfers + hospitality fees', amount: { amount: 180_000, currency: 'INR' as const }, tone: 'muted' },
+    ]
+    const total = sum(lines.map((l) => l.amount))
+    return [
+      { kind: 'say', text: 'Approved. Issuing the dossier now — it is forward-able as is.', gapMs: 120 },
       {
         kind: 'artifact',
         artifact: {
@@ -367,8 +437,7 @@ const conciergeDossier: Beat = {
           kind: 'dossier',
           id: artifactId('dossier.f1'),
           title: 'Abu Dhabi Grand Prix · November 2025',
-          summary:
-            'A three-day arrangement for four guests — threaded with accessibility, paddock proximity, and a quiet lunch on race day.',
+          summary: 'A three-day arrangement for four guests — threaded with accessibility, paddock proximity, and a quiet lunch on race day.',
           meta: [
             { label: 'guests', value: '4' },
             { label: 'nights', value: '3' },
@@ -376,21 +445,9 @@ const conciergeDossier: Beat = {
             { label: 'total', value: fmt(total) },
           ],
           sections: [
-            {
-              title: 'The arrangement',
-              body:
-                'Waldorf Astoria on the marina, step-free suite with an adjoining room; Trophy Lounge hospitality for all three days; Friday pit-lane walk held ahead of FP2; accessible transfers tied to the lounge entry.',
-            },
-            {
-              title: 'Kept in mind',
-              body:
-                'Plant-based menu flagged with the hospitality kitchen. Quiet front-row seating requested for the Saturday Q&A. A low-floor transfer vehicle is assigned for all circuit movements.',
-            },
-            {
-              title: 'What happens next',
-              body:
-                'I hold the Friday pit-lane walk and the Trophy hospitality for 48 hours. When you confirm, I will issue confirmations to each guest and a single consolidated invoice.',
-            },
+            { title: 'The arrangement', body: 'Waldorf Astoria on the marina, step-free suite with an adjoining room; Trophy Lounge hospitality for all three days; Friday pit-lane walk held ahead of FP2; accessible transfers tied to the lounge entry.' },
+            { title: 'Kept in mind', body: 'Plant-based menu flagged with the hospitality kitchen. Quiet front-row seating requested for the Saturday Q&A. A low-floor transfer vehicle is assigned for all circuit movements.' },
+            { title: 'What happens next', body: 'Per-guest confirmations issued; a single consolidated invoice follows within 24 hours.' },
           ],
         },
       },
@@ -752,6 +809,7 @@ export const f1AbuDhabiScript: ScenarioScript = {
       conciergeGift,
       conciergeGiftPost,
       conciergeDossier,
+      conciergeDossierPost,
       conciergeRefineGeneric,
       conciergeRefineGenericPost,
       conciergeIntro,

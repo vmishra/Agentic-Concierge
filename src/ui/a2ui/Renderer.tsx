@@ -10,6 +10,7 @@ import { ResearchScratchpad } from './ResearchScratchpad'
 import { MapPreview } from './MapPreview'
 import { Dossier } from './Dossier'
 import { Note } from './Note'
+import { ApprovalCard } from './ApprovalCard'
 
 export interface RendererProps {
   artifacts: A2UIArtifact[]
@@ -66,5 +67,7 @@ function ArtifactSwitch({
       return <Dossier artifact={artifact} />
     case 'note':
       return <Note artifact={artifact} />
+    case 'approval_request':
+      return <ApprovalCard artifact={artifact} />
   }
 }

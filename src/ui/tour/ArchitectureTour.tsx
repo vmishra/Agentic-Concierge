@@ -12,6 +12,8 @@ import {
   A2UIDiagram,
   RunnerDiagram,
   ContextDiagram,
+  HierarchyDiagram,
+  HitlDiagram,
 } from './diagrams'
 
 interface Slide {
@@ -38,8 +40,24 @@ const slides = (): Slide[] => [
     sourcePath: 'src/adk/ · src/agents/',
   },
   {
+    id: 'hierarchy',
+    kicker: '02 · agent hierarchy',
+    title: 'A tree, not a flat panel of chatbots.',
+    blurb:
+      'Every agent can expose sub-agents as tools. The Concierge delegates to five specialists; each specialist can itself delegate further — the Researcher runs a plan/search/critique/refine sub-loop, the Experience specialist can invoke a tier-ranking helper. The tree is arbitrarily deep, but traces and artifacts bubble up to the root, so the user still experiences a single voice.',
+    takeaway:
+      'The agent-as-tool pattern is recursive. Hierarchies encode expertise without fragmenting the user experience.',
+    diagram: <HierarchyDiagram />,
+    code: `const researcher = new LlmAgent({
+  name: 'Researcher',
+  subAgents: [planningAgent, searchAgent, critiqueAgent],
+  // ...
+})`,
+    sourcePath: 'src/agents/ · src/adk/agent.ts',
+  },
+  {
     id: 'skills',
-    kicker: '02 · skills · on-demand context',
+    kicker: '03 · skills · on-demand context',
     title: 'Agents start lean. Skills attach only when needed.',
     blurb:
       'An agent declares the skills it may use. The runtime loads one only when the coordinator determines it is needed — attaching that skill\'s tool bundle, merging its instructions into the prompt, and emitting a `skill · load` event. This keeps the system prompt small by default and makes context expansion an auditable, first-class step.',
@@ -56,7 +74,7 @@ const slides = (): Slide[] => [
   },
   {
     id: 'tools',
-    kicker: '03 · tools · manifests first',
+    kicker: '04 · tools · manifests first',
     title: 'Manifests register. Implementations load at call time.',
     blurb:
       'Every tool is registered as a lightweight manifest — name, description, JSON-Schema. The implementation is a dynamic `import()` that resolves only when the tool is about to execute. Parallel tool calls fan out with `Promise.all`; errors surface as structured events the coordinator can recover from. This matches Gemini 3 Flash\'s profile of 100+ reliable tool calls per turn while keeping the initial bundle small.',
@@ -73,7 +91,7 @@ const result = await tool.execute(args, ctx)`,
   },
   {
     id: 'memory',
-    kicker: '04 · memory · repeat-user personalisation',
+    kicker: '05 · memory · repeat-user personalisation',
     title: 'Preferences persist across sessions — and arrive in context.',
     blurb:
       'Memory operates at two layers. Short-term session state is a shared scratchpad across agents within a turn. Long-term memory is embedding-indexed by Google\'s multimodal gemini-embedding-2 and persisted client-side. On every user message, the Personalizer runs a top-k semantic search; matching facts are injected into the coordinator\'s next prompt. When the same user returns — same device or, with Firestore, any device — the previous preferences are already in context.',
@@ -88,7 +106,7 @@ injectedInstructions.push(\`Known preferences: \${hits.map(h => '· ' + h.fact.t
   },
   {
     id: 'a2ui',
-    kicker: '05 · a2ui · generative UI',
+    kicker: '06 · a2ui · generative UI',
     title: 'Agents emit typed components, rendered by the client.',
     blurb:
       'Google\'s Agent-to-UI (A2UI) protocol replaces free-form text output with declarative JSON against a pre-approved component catalog — itineraries, option grids, comparison tables, pricing breakdowns, research scratchpads. The client renders using its own design tokens. The result is safer than free-form HTML, portable across surfaces, and interactive by default: every refinement chip beneath a card routes back to the relevant specialist as a structured re-query.',
@@ -112,8 +130,23 @@ injectedInstructions.push(\`Known preferences: \${hits.map(h => '· ' + h.fact.t
     sourcePath: 'src/adk/a2ui.ts',
   },
   {
+    id: 'hitl',
+    kicker: '07 · human-in-the-loop',
+    title: 'Pause mid-turn for an explicit human decision.',
+    blurb:
+      'When a step is consequential — a booking, an approval, an upgrade over budget — the agent invokes `request_approval`, a tool that blocks on a HitlBus promise. The client renders an approval_request A2UI artifact with Approve / Not yet controls; the user\'s click resolves the promise and the tool returns a structured decision. The runner\'s ordinary tool loop then resumes. Human oversight is a first-class capability in the architecture, not a retrofit.',
+    takeaway:
+      'Human-in-the-loop is just another async tool call. Same loop, same artifact contract, observable in the activity ribbon.',
+    diagram: <HitlDiagram />,
+    code: `// src/skills/human-in-the-loop.ts
+// request_approval tool awaits the user's click on the ApprovalCard
+const decision = await hitlBus.await(requestId)
+return { approved: decision.approved, note: decision.note }`,
+    sourcePath: 'src/adk/hitl.ts · src/skills/human-in-the-loop.ts',
+  },
+  {
     id: 'runner',
-    kicker: '06 · runner · one turn',
+    kicker: '08 · runner · one turn',
     title: 'The execution loop — a single file, end to end.',
     blurb:
       'The runner assembles the prompt (system instructions + active skills + memory hits), streams from the model, executes tool calls in parallel, dispatches sub-agents over the A2A interface with their own sessions, and loops until the stream completes. Sub-agent artifacts are routed back into the shared workspace so the user sees a single, coherent response.',
@@ -124,7 +157,7 @@ injectedInstructions.push(\`Known preferences: \${hits.map(h => '· ' + h.fact.t
   },
   {
     id: 'deep-research',
-    kicker: '07 · deep research · LoopAgent',
+    kicker: '09 · deep research · LoopAgent',
     title: 'Iterative research, made observable.',
     blurb:
       'The Researcher is implemented as an ADK LoopAgent — the same deterministic workflow primitive Google introduced in the ADK Interactions API for long-running, iterative tasks. Each cycle runs plan → search → critique → refine. Every iteration emits a research_step event and updates a live research_scratchpad artifact with sub-questions, findings, and citations, so the user can inspect the reasoning rather than wait on a progress bar.',
@@ -142,7 +175,7 @@ injectedInstructions.push(\`Known preferences: \${hits.map(h => '· ' + h.fact.t
   },
   {
     id: 'context',
-    kicker: '08 · long-context management',
+    kicker: '10 · long-context management',
     title: 'Disciplined use of a 1M-token window.',
     blurb:
       'Gemini 3 Flash exposes a 1M-token context window. The runtime tracks approximate usage continuously (the `ctx` meter in the top chrome) and, once the window crosses a configurable soft threshold, the Compactor summarises older turns into a compact `priorSummary` note and removes them from the live prompt. The saved token count is reported as a trace event. Deep Research iterations remain observable without inflating the prompt.',

@@ -121,18 +121,26 @@ describe('F1 Abu Dhabi orchestration — mock mode', () => {
     expect(writes.length).toBeGreaterThanOrEqual(1)
   })
 
-  test('proceed produces a dossier and pricing breakdown', async () => {
+  test('proceed triggers human-in-the-loop approval, then dossier + pricing', async () => {
+    const { hitlBus } = await import('@/adk/hitl')
     const { concierge, runtime } = makeRuntime()
     const session: Session = { id: 'test4', messages: [], state: {} }
 
     await run(concierge, 'F1 Abu Dhabi plan for four', runtime, { session })
 
     const artifacts: A2UIArtifact[] = []
-    await run(concierge, 'Let\'s proceed.', runtime, {
-      session,
-      onArtifact: (a) => artifacts.push(a),
-    })
+    // Auto-approve any pending HITL request as soon as it appears.
+    const offOnArtifact = (a: A2UIArtifact) => {
+      artifacts.push(a)
+      if (a.kind === 'approval_request') {
+        // Resolve on next microtask so the tool is actually awaiting.
+        setTimeout(() => hitlBus.resolve(a.requestId, { kind: 'approval', approved: true }), 5)
+      }
+    }
 
+    await run(concierge, 'Let\'s proceed.', runtime, { session, onArtifact: offOnArtifact })
+
+    expect(artifacts.some((a) => a.kind === 'approval_request')).toBe(true)
     expect(artifacts.some((a) => a.kind === 'dossier')).toBe(true)
     expect(artifacts.some((a) => a.kind === 'pricing_breakdown')).toBe(true)
   })

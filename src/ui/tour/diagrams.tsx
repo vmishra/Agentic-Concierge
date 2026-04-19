@@ -854,7 +854,281 @@ export function RunnerDiagram() {
 }
 
 // ---------------------------------------------------------------------------
-// 07 — Context discipline: bar fill + compaction
+// Agent Hierarchy — coordinator delegates; specialists can delegate further
+// ---------------------------------------------------------------------------
+
+export function HierarchyDiagram() {
+  const L1 = { x: 260, y: 60 } // root coordinator
+  const L2 = [
+    { name: 'Researcher', x: 60, y: 200 },
+    { name: 'Logistics', x: 180, y: 200 },
+    { name: 'Experience', x: 300, y: 200 },
+    { name: 'Budget', x: 420, y: 200 },
+    { name: 'Personalizer', x: 540, y: 200 },
+  ]
+  const L3 = [
+    { parent: 0, name: 'plan', x: 20, y: 340 },
+    { parent: 0, name: 'search', x: 100, y: 340 },
+    { parent: 2, name: 'insider', x: 260, y: 340 },
+    { parent: 2, name: 'tier-rank', x: 340, y: 340 },
+    { parent: 4, name: 'narrative', x: 540, y: 340 },
+  ]
+
+  return (
+    <motion.svg viewBox="0 0 600 480" className="w-full h-auto" initial="hidden" animate="show">
+      <Defs />
+
+      <motion.text x={40} y={30} fontSize="10.5" letterSpacing="2.5" fill={SUBTLE} variants={fadeUp}>
+        AGENT HIERARCHY · agent-as-tool
+      </motion.text>
+
+      {/* L1 → L2 connectors */}
+      {L2.map((n, i) => (
+        <g key={`l1l2-${i}`}>
+          <motion.path
+            d={`M ${L1.x} ${L1.y + 32} C ${L1.x} ${120}, ${n.x + 60} ${160}, ${n.x + 60} ${n.y}`}
+            stroke={BORDER}
+            strokeWidth={0.8}
+            fill="none"
+            variants={drawLine}
+            style={{ transitionDelay: `${0.2 + i * 0.06}s` }}
+          />
+          <path
+            d={`M ${L1.x} ${L1.y + 32} C ${L1.x} ${120}, ${n.x + 60} ${160}, ${n.x + 60} ${n.y}`}
+            stroke={ACCENT}
+            strokeWidth={1.1}
+            strokeDasharray="2 6"
+            fill="none"
+            strokeOpacity={0.7}
+            filter="url(#glow)"
+            style={{ animation: `flowDash ${1.8 + i * 0.15}s linear infinite` }}
+          />
+        </g>
+      ))}
+
+      {/* L2 → L3 connectors for the ones that have children */}
+      {L3.map((c, i) => {
+        const parent = L2[c.parent]!
+        return (
+          <g key={`l2l3-${i}`}>
+            <motion.path
+              d={`M ${parent.x + 60} ${parent.y + 32} C ${parent.x + 60} ${parent.y + 72}, ${c.x + 36} ${c.y - 22}, ${c.x + 36} ${c.y}`}
+              stroke={BORDER}
+              strokeWidth={0.7}
+              fill="none"
+              variants={drawLine}
+              style={{ transitionDelay: `${0.7 + i * 0.08}s` }}
+            />
+            <path
+              d={`M ${parent.x + 60} ${parent.y + 32} C ${parent.x + 60} ${parent.y + 72}, ${c.x + 36} ${c.y - 22}, ${c.x + 36} ${c.y}`}
+              stroke={TRACE}
+              strokeWidth={0.9}
+              strokeDasharray="2 4"
+              fill="none"
+              filter="url(#glow)"
+              style={{ animation: `flowDash ${2 + i * 0.2}s linear infinite` }}
+            />
+          </g>
+        )
+      })}
+
+      {/* L1 node — Coordinator */}
+      <motion.g variants={popIn}>
+        <rect x={L1.x - 70} y={L1.y} width={140} height={40} rx={20} fill={SOFT2} stroke={ACCENT} strokeWidth={1.4} filter="url(#glow)" />
+        <circle
+          cx={L1.x - 52}
+          cy={L1.y + 20}
+          r={4}
+          fill={ACCENT}
+          style={{ animation: 'pulseNode 1.6s ease-in-out infinite' }}
+        />
+        <text x={L1.x + 10} y={L1.y + 25} fontSize="12" fill={ACCENT} textAnchor="middle" fontWeight={600} letterSpacing="1">
+          CONCIERGE
+        </text>
+      </motion.g>
+      <motion.text
+        x={L1.x + 76}
+        y={L1.y + 25}
+        fontSize="9"
+        fill={SUBTLE}
+        variants={fadeUp}
+        style={{ transitionDelay: '0.15s' }}
+      >
+        L1 · coordinator
+      </motion.text>
+
+      {/* L2 nodes — Specialists */}
+      {L2.map((n, i) => (
+        <motion.g key={n.name} variants={popIn} style={{ transitionDelay: `${0.3 + i * 0.06}s` }}>
+          <rect x={n.x} y={n.y} width={120} height={32} rx={8} fill={SOFT} stroke={BORDER} strokeWidth={0.8} />
+          <circle
+            cx={n.x + 12}
+            cy={n.y + 16}
+            r={3}
+            fill={TRACE}
+            style={{ animation: `pulseNodeSmall ${1.5 + i * 0.1}s ease-in-out infinite` }}
+          />
+          <text x={n.x + 24} y={n.y + 20} fontSize="11" fill={MUTED} fontWeight={500}>
+            {n.name}
+          </text>
+        </motion.g>
+      ))}
+      <motion.text x={30} y={245} fontSize="9" fill={SUBTLE} variants={fadeUp} style={{ transitionDelay: '0.5s' }}>
+        L2 · specialists
+      </motion.text>
+
+      {/* L3 nodes — sub-steps / nested tool workflows */}
+      {L3.map((c, i) => (
+        <motion.g key={`leaf-${i}`} variants={popIn} style={{ transitionDelay: `${0.85 + i * 0.08}s` }}>
+          <rect x={c.x} y={c.y} width={72} height={24} rx={6} fill="transparent" stroke={TRACE} strokeWidth={0.7} strokeDasharray="2 3" />
+          <text x={c.x + 36} y={c.y + 15} fontSize="9.5" fill={TRACE} textAnchor="middle" fontFamily="Geist Mono, ui-monospace, monospace">
+            {c.name}
+          </text>
+        </motion.g>
+      ))}
+      <motion.text x={30} y={376} fontSize="9" fill={SUBTLE} variants={fadeUp} style={{ transitionDelay: '1.1s' }}>
+        L3 · nested workflows
+      </motion.text>
+
+      {/* Bottom legend */}
+      <motion.g variants={fadeUp} style={{ transitionDelay: '1.3s' }}>
+        <line x1={40} y1={420} x2={560} y2={420} stroke={BORDER} strokeWidth={0.5} strokeDasharray="2 4" />
+        <text x={40} y={444} fontSize="11" fill={MUTED}>
+          Any agent can expose sub-agents as tools. The tree is arbitrarily deep; traces bubble up to the root.
+        </text>
+        <text x={40} y={462} fontSize="10" fill={SUBTLE} fontFamily="Geist Mono, ui-monospace, monospace">
+          new LlmAgent({'{ subAgents: [ ... ] }'})
+        </text>
+      </motion.g>
+    </motion.svg>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Human-in-the-Loop — pause-resume tool call
+// ---------------------------------------------------------------------------
+
+export function HitlDiagram() {
+  return (
+    <motion.svg viewBox="0 0 600 480" className="w-full h-auto" initial="hidden" animate="show">
+      <Defs />
+
+      <motion.text x={40} y={30} fontSize="10.5" letterSpacing="2.5" fill={SUBTLE} variants={fadeUp}>
+        HUMAN-IN-THE-LOOP · request_approval
+      </motion.text>
+
+      {/* Timeline spine */}
+      <motion.line
+        x1={60}
+        y1={170}
+        x2={560}
+        y2={170}
+        stroke={BORDER}
+        strokeWidth={0.7}
+        strokeDasharray="2 4"
+        variants={fadeUp}
+      />
+
+      {/* Stages along the spine */}
+      {[
+        { x: 60, label: 'agent\nturn starts', color: MUTED },
+        { x: 200, label: 'tool call\nrequest_approval', color: ACCENT, active: true },
+        { x: 340, label: 'PAUSED\nawaiting human', color: TRACE, pulse: true },
+        { x: 460, label: 'click Approve\n/ Not yet', color: ACCENT },
+        { x: 560, label: 'turn resumes', color: MUTED },
+      ].map((p, i) => (
+        <motion.g key={i} variants={popIn} style={{ transitionDelay: `${0.2 + i * 0.1}s` }}>
+          <circle
+            cx={p.x}
+            cy={170}
+            r={p.active ? 7 : 5}
+            fill={p.color}
+            filter={p.pulse || p.active ? 'url(#glow)' : undefined}
+            style={p.pulse ? { animation: 'pulseNode 1.3s ease-in-out infinite' } : undefined}
+          />
+          {(p.label.split('\n')).map((ln, li) => (
+            <text
+              key={li}
+              x={p.x}
+              y={190 + li * 13}
+              fontSize="10"
+              fill={p.color}
+              textAnchor="middle"
+              fontWeight={p.active ? 600 : 400}
+            >
+              {ln}
+            </text>
+          ))}
+        </motion.g>
+      ))}
+
+      {/* Flowing animation on the spine showing the pause region */}
+      <line
+        x1={200}
+        y1={170}
+        x2={460}
+        y2={170}
+        stroke={ACCENT}
+        strokeWidth={1.3}
+        strokeDasharray="3 6"
+        strokeOpacity={0.75}
+        filter="url(#glow)"
+        style={{ animation: 'flowDash 2.2s linear infinite' }}
+      />
+
+      {/* Above: the model's stream */}
+      <motion.text x={60} y={96} fontSize="10" letterSpacing="2" fill={SUBTLE} variants={fadeUp}>
+        MODEL STREAM
+      </motion.text>
+      <motion.g variants={fadeUp} style={{ transitionDelay: '0.1s' }}>
+        <rect x={60} y={106} width={500} height={28} rx={6} fill={SOFT} stroke={BORDER} strokeWidth={0.6} />
+        <rect x={60} y={106} width={140} height={28} rx={6} fill={`color-mix(in oklab, ${MUTED} 22%, transparent)`} />
+        <rect x={200} y={106} width={140} height={28} rx={0} fill={`color-mix(in oklab, ${ACCENT} 18%, transparent)`} filter="url(#glow)" />
+        <rect x={340} y={106} width={120} height={28} fill="transparent" />
+        <text x={340 + 60} y={125} fontSize="9.5" fill={TRACE} textAnchor="middle" letterSpacing="2">
+          ⏸ PAUSED
+        </text>
+        <rect x={460} y={106} width={100} height={28} rx={6} fill={`color-mix(in oklab, ${MUTED} 22%, transparent)`} />
+      </motion.g>
+
+      {/* Below: approval card mock */}
+      <motion.g variants={fadeUp} style={{ transitionDelay: '0.9s' }}>
+        <rect x={160} y={268} width={280} height={120} rx={12} fill={SOFT2} stroke={ACCENT} strokeWidth={1.2} filter="url(#glow)" />
+        <rect x={160} y={268} width={280} height={2} rx={2} fill={ACCENT} opacity={0.8} filter="url(#glow)" />
+        <text x={174} y={290} fontSize="8.5" fill={SUBTLE} letterSpacing="1.8">
+          A2UI · approval_request
+        </text>
+        <text x={174} y={310} fontSize="12" fill="white" fontWeight={600} className="display">
+          Confirm arrangement
+        </text>
+        <text x={174} y={328} fontSize="10" fill={MUTED}>
+          Hold pit-lane walk + Trophy hospitality · ₹27.41L
+        </text>
+        <rect x={174} y={344} width={94} height={28} rx={6} fill={SOFT} stroke={BORDER} />
+        <text x={221} y={362} fontSize="10" fill={MUTED} textAnchor="middle">
+          Not yet
+        </text>
+        <rect x={280} y={344} width={144} height={28} rx={6} fill={ACCENT} filter="url(#glow)" />
+        <text x={352} y={362} fontSize="10.5" fill="oklch(16% 0 0)" textAnchor="middle" fontWeight={600}>
+          Approve and proceed
+        </text>
+      </motion.g>
+
+      {/* Legend */}
+      <motion.g variants={fadeUp} style={{ transitionDelay: '1.2s' }}>
+        <text x={40} y={440} fontSize="11" fill={MUTED}>
+          The agent turn is a normal tool loop. HITL is one more async tool.
+        </text>
+        <text x={40} y={458} fontSize="10" fill={SUBTLE} fontFamily="Geist Mono, ui-monospace, monospace">
+          const {'{'} approved {'}'} = await hitlBus.await(requestId)
+        </text>
+      </motion.g>
+    </motion.svg>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Context discipline: bar fill + compaction
 // ---------------------------------------------------------------------------
 
 export function ContextDiagram() {
