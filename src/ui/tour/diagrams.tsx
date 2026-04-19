@@ -916,51 +916,53 @@ export function HierarchyDiagram() {
         AGENT HIERARCHY · agent-as-tool
       </motion.text>
 
-      {/* L1 → L2 connectors */}
+      {/* L1 → L2 connectors — drawn AFTER L2 nodes settle. */}
       {L2.map((n, i) => (
         <g key={`l1l2-${i}`}>
           <motion.path
-            d={`M ${L1.x} ${L1.y + 32} C ${L1.x} ${120}, ${n.x + 60} ${160}, ${n.x + 60} ${n.y}`}
+            d={`M ${L1.x} ${L1.y + 34} C ${L1.x} ${120}, ${n.x + L2_W / 2} ${160}, ${n.x + L2_W / 2} ${n.y}`}
             stroke={BORDER}
             strokeWidth={0.8}
             fill="none"
             variants={drawLine}
-            style={{ transitionDelay: `${0.2 + i * 0.06}s` }}
+            style={{ transitionDelay: `${1.0 + i * 0.08}s` }}
           />
           <path
-            d={`M ${L1.x} ${L1.y + 32} C ${L1.x} ${120}, ${n.x + 60} ${160}, ${n.x + 60} ${n.y}`}
+            d={`M ${L1.x} ${L1.y + 34} C ${L1.x} ${120}, ${n.x + L2_W / 2} ${160}, ${n.x + L2_W / 2} ${n.y}`}
             stroke={ACCENT}
             strokeWidth={1.1}
             strokeDasharray="2 6"
             fill="none"
             strokeOpacity={0.7}
             filter="url(#glow)"
-            style={{ animation: `flowDash ${1.8 + i * 0.15}s linear infinite` }}
+            style={{ animation: `flowDash ${3.15 + i * 0.26}s linear infinite` }}
           />
         </g>
       ))}
 
-      {/* L2 → L3 connectors for the ones that have children */}
+      {/* L2 → L3 connectors — drawn AFTER L3 nodes settle. */}
       {L3.map((c, i) => {
         const parent = L2[c.parent]!
+        const px = parent.x + L2_W / 2
+        const cx = c.x + L3_W / 2
         return (
           <g key={`l2l3-${i}`}>
             <motion.path
-              d={`M ${parent.x + 60} ${parent.y + 32} C ${parent.x + 60} ${parent.y + 72}, ${c.x + 36} ${c.y - 22}, ${c.x + 36} ${c.y}`}
+              d={`M ${px} ${parent.y + 34} C ${px} ${parent.y + 72}, ${cx} ${c.y - 22}, ${cx} ${c.y}`}
               stroke={BORDER}
               strokeWidth={0.7}
               fill="none"
               variants={drawLine}
-              style={{ transitionDelay: `${0.7 + i * 0.08}s` }}
+              style={{ transitionDelay: `${2.4 + i * 0.1}s` }}
             />
             <path
-              d={`M ${parent.x + 60} ${parent.y + 32} C ${parent.x + 60} ${parent.y + 72}, ${c.x + 36} ${c.y - 22}, ${c.x + 36} ${c.y}`}
+              d={`M ${px} ${parent.y + 34} C ${px} ${parent.y + 72}, ${cx} ${c.y - 22}, ${cx} ${c.y}`}
               stroke={TRACE}
               strokeWidth={0.9}
               strokeDasharray="2 4"
               fill="none"
               filter="url(#glow)"
-              style={{ animation: `flowDash ${2 + i * 0.2}s linear infinite` }}
+              style={{ animation: `flowDash ${3.5 + i * 0.35}s linear infinite` }}
             />
           </g>
         )
@@ -991,31 +993,31 @@ export function HierarchyDiagram() {
         L1 · coordinator
       </motion.text>
 
-      {/* L2 nodes — Specialists */}
+      {/* L2 nodes — Specialists. Smaller rect width so everything fits the viewBox. */}
       {L2.map((n, i) => (
-        <motion.g key={n.name} variants={popIn} style={{ transitionDelay: `${0.3 + i * 0.06}s` }}>
-          <rect x={n.x} y={n.y} width={120} height={32} rx={8} fill={SOFT} stroke={BORDER} strokeWidth={0.8} />
+        <motion.g key={n.name} variants={popIn} style={{ transitionDelay: `${0.4 + i * 0.1}s` }}>
+          <rect x={n.x} y={n.y} width={L2_W} height={34} rx={8} fill={SOFT} stroke={BORDER} strokeWidth={0.8} />
           <circle
-            cx={n.x + 12}
-            cy={n.y + 16}
+            cx={n.x + 10}
+            cy={n.y + 17}
             r={3}
             fill={TRACE}
-            style={{ animation: `pulseNodeSmall ${1.5 + i * 0.1}s ease-in-out infinite` }}
+            style={{ animation: `pulseNodeSmall ${2.1 + i * 0.14}s ease-in-out infinite` }}
           />
-          <text x={n.x + 24} y={n.y + 20} fontSize="11" fill={MUTED} fontWeight={500}>
+          <text x={n.x + 20} y={n.y + 21} fontSize="10" fill={MUTED} fontWeight={500}>
             {n.name}
           </text>
         </motion.g>
       ))}
-      <motion.text x={30} y={245} fontSize="9" fill={SUBTLE} variants={fadeUp} style={{ transitionDelay: '0.5s' }}>
+      <motion.text x={30} y={250} fontSize="9" fill={SUBTLE} variants={fadeUp} style={{ transitionDelay: '0.5s' }}>
         L2 · specialists
       </motion.text>
 
       {/* L3 nodes — sub-steps / nested tool workflows */}
       {L3.map((c, i) => (
         <motion.g key={`leaf-${i}`} variants={popIn} style={{ transitionDelay: `${1.9 + i * 0.1}s` }}>
-          <rect x={c.x} y={c.y} width={72} height={24} rx={6} fill="transparent" stroke={TRACE} strokeWidth={0.7} strokeDasharray="2 3" />
-          <text x={c.x + 36} y={c.y + 15} fontSize="9.5" fill={TRACE} textAnchor="middle" fontFamily="Geist Mono, ui-monospace, monospace">
+          <rect x={c.x} y={c.y} width={L3_W} height={22} rx={6} fill="transparent" stroke={TRACE} strokeWidth={0.7} strokeDasharray="2 3" />
+          <text x={c.x + L3_W / 2} y={c.y + 14} fontSize="9" fill={TRACE} textAnchor="middle" fontFamily="Geist Mono, ui-monospace, monospace">
             {c.name}
           </text>
         </motion.g>
