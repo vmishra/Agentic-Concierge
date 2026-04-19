@@ -476,3 +476,79 @@ export const campaigns: Campaign[] = [
 // Category labels & colours
 // -----------------------------------------------------------------------------
 export const categoryOrder: Category[] = ['F1', 'Tennis', 'Cricket', 'Football', 'Golf', 'Rugby', 'Live']
+
+// -----------------------------------------------------------------------------
+// AI reads — one strategic insight per section
+// -----------------------------------------------------------------------------
+export interface AIRead {
+  section: 'board' | 'drill' | 'deep' | 'pulse' | 'persona' | 'campaign'
+  tag: string
+  insight: string
+  confidence: number // 0–100
+}
+export const aiReads: AIRead[] = [
+  {
+    section: 'board',
+    tag: 'portfolio rebalance',
+    insight:
+      'Masters inventory is UHNI-over-indexed and likely to oversell. Redirect 15% of hospitality to Augusta spring portfolio and reprice Sunday round +8% on 4-week lead.',
+    confidence: 87,
+  },
+  {
+    section: 'drill',
+    tag: 'pricing action',
+    insight:
+      'Roland-Garros week-2 inventory is clearing 23% faster than 2025. Raise Chatrier-side pricing 6% on the next 48h before the final-four narrative arrives.',
+    confidence: 82,
+  },
+  {
+    section: 'deep',
+    tag: 'inventory reservation',
+    insight:
+      'Debenture resale is +18% YoY. Historical conversion suggests reserving 9 seats for corporate inquiries scoring above 75 propensity; release remaining 32 seats to UHNI referral channel this week.',
+    confidence: 91,
+  },
+  {
+    section: 'pulse',
+    tag: 'anomaly',
+    insight:
+      'Singapore-leg Taylor Swift demand-to-supply ratio is 40× with social velocity still rising. Repackage to premium dinner + Marina Bay suite; expected lift 22% without adding inventory.',
+    confidence: 94,
+  },
+  {
+    section: 'persona',
+    tag: 'targeting',
+    insight:
+      'UHNI segment scores 96 on F1 and repeats every 11 months. The 412-strong cohort has a 64-person gap vs 2025 bookings — direct outreach for Abu Dhabi GP will close it.',
+    confidence: 89,
+  },
+  {
+    section: 'campaign',
+    tag: 'channel reallocation',
+    insight:
+      'Private-dinner channel shows 8.4× ROI on Monaco vs LinkedIn at 3.1×. Scale private-dinner budget 35% and reduce paid LinkedIn by 15% across Q2 campaigns.',
+    confidence: 85,
+  },
+]
+
+// -----------------------------------------------------------------------------
+// Live anomaly feed — 8 pulsing-dot entries for the top ticker
+// -----------------------------------------------------------------------------
+export interface Anomaly {
+  id: string
+  event: string
+  signal: string
+  delta: string
+  severity: 'info' | 'watch' | 'action'
+  ago: string
+}
+export const anomalies: Anomaly[] = [
+  { id: 'a1', event: 'Coldplay · Mumbai', signal: 'social velocity', delta: '+52% (2.6σ)', severity: 'action', ago: '4m ago' },
+  { id: 'a2', event: 'Monaco GP', signal: 'paddock sell-through', delta: '+9% DoD', severity: 'watch', ago: '12m ago' },
+  { id: 'a3', event: 'Abu Dhabi GP', signal: 'Trophy lounge inventory', delta: '2 seats remaining', severity: 'action', ago: '24m ago' },
+  { id: 'a4', event: 'Taylor Swift · Asia', signal: 'demand/supply ratio', delta: '40× — outlier', severity: 'action', ago: '48m ago' },
+  { id: 'a5', event: 'UEFA CL Final', signal: 'news mentions', delta: '+18% since draw', severity: 'info', ago: '1h ago' },
+  { id: 'a6', event: 'India v Australia Test', signal: 'day-5 pricing signal', delta: '+2.4× baseline', severity: 'watch', ago: '2h ago' },
+  { id: 'a7', event: 'Roland-Garros', signal: 'second-week search', delta: '+24% WoW', severity: 'watch', ago: '3h ago' },
+  { id: 'a8', event: 'Wimbledon', signal: 'debenture resale', delta: '+18% YoY', severity: 'info', ago: '4h ago' },
+]

@@ -14,7 +14,7 @@
  * sparklines, heat strips. Champagne as the single action colour.
  */
 
-import { useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { AnimatePresence, motion } from 'motion/react'
 import {
@@ -29,6 +29,7 @@ import {
   CloudSun,
   Users,
   Megaphone,
+  Sparkles,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import {
@@ -41,9 +42,13 @@ import {
   topTargetsByEvent,
   campaigns,
   categoryOrder,
+  aiReads,
+  anomalies,
   type EventRow,
   type Action,
   type Persona,
+  type AIRead,
+  type Anomaly,
 } from './behindData'
 
 // -----------------------------------------------------------------------------
@@ -78,10 +83,27 @@ function actionTone(a: Action): { fg: string; bg: string; dot: string } {
 }
 
 // -----------------------------------------------------------------------------
+// Cross-section nav context: drill into a specific event from the board
+// and the category drill, and read/write which event the deep-dive shows.
+// -----------------------------------------------------------------------------
+interface NavCtx {
+  goToSection: (id: string) => void
+  focusEvent: (eventId: string) => void
+  focusedEventId: string
+}
+const Nav = createContext<NavCtx | null>(null)
+function useNav(): NavCtx {
+  const ctx = useContext(Nav)
+  if (!ctx) throw new Error('Nav context missing')
+  return ctx
+}
+
+// -----------------------------------------------------------------------------
 // Sections + nav
 // -----------------------------------------------------------------------------
 interface Section {
   id: string
+  aiSection: AIRead['section']
   label: string
   sub: string
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
@@ -89,12 +111,12 @@ interface Section {
 }
 
 const SECTIONS: Section[] = [
-  { id: 'board', label: 'Annual planning board', sub: '2026 · all categories', icon: LayoutDashboard, body: AnnualBoard },
-  { id: 'drill', label: 'Category drill · Tennis', sub: 'leagues · signals · recommendation', icon: Trophy, body: CategoryDrill },
-  { id: 'deep', label: 'Event deep dive', sub: 'Wimbledon 2026 signal dashboard', icon: Target, body: EventDeepDive },
-  { id: 'pulse', label: 'Market pulse & context', sub: 'social · news · weather · clubbing', icon: Activity, body: MarketPulse },
-  { id: 'persona', label: 'Persona & targeting', sub: 'segments · match × event · propensity', icon: Users, body: PersonaTargeting },
-  { id: 'campaign', label: 'Campaigns & portfolio', sub: 'channel plan · ROI · ratios', icon: Megaphone, body: CampaignsPortfolio },
+  { id: 'board', aiSection: 'board', label: 'Annual planning board', sub: '2026 · all categories', icon: LayoutDashboard, body: AnnualBoard },
+  { id: 'drill', aiSection: 'drill', label: 'Category drill · Tennis', sub: 'leagues · signals · recommendation', icon: Trophy, body: CategoryDrill },
+  { id: 'deep', aiSection: 'deep', label: 'Event deep dive', sub: 'signal dashboard per event', icon: Target, body: EventDeepDive },
+  { id: 'pulse', aiSection: 'pulse', label: 'Market pulse & context', sub: 'social · news · weather · clubbing', icon: Activity, body: MarketPulse },
+  { id: 'persona', aiSection: 'persona', label: 'Persona & targeting', sub: 'segments · match × event · propensity', icon: Users, body: PersonaTargeting },
+  { id: 'campaign', aiSection: 'campaign', label: 'Campaigns & portfolio', sub: 'channel plan · ROI · ratios', icon: Megaphone, body: CampaignsPortfolio },
 ]
 
 export function BehindTheScenesButton() {
@@ -117,9 +139,16 @@ export function BehindTheScenesButton() {
 
 function BehindTheScenes({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const [idx, setIdx] = useState(0)
+  const [focusedEventId, setFocusedEventId] = useState<string>('wimbledon-26')
   const Sec = SECTIONS[idx]!.body
+  const activeSection = SECTIONS[idx]!
+  const currentRead = aiReads.find((r) => r.section === activeSection.aiSection)
+
   useEffect(() => {
-    if (!open) setIdx(0)
+    if (!open) {
+      setIdx(0)
+      setFocusedEventId('wimbledon-26')
+    }
   }, [open])
   useEffect(() => {
     if (!open) return
@@ -130,6 +159,18 @@ function BehindTheScenes({ open, onOpenChange }: { open: boolean; onOpenChange: 
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [open])
+
+  const navCtx = useMemo<NavCtx>(
+    () => ({
+      goToSection: (id) => {
+        const i = SECTIONS.findIndex((s) => s.id === id)
+        if (i >= 0) setIdx(i)
+      },
+      focusEvent: (eventId) => setFocusedEventId(eventId),
+      focusedEventId,
+    }),
+    [focusedEventId],
+  )
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -156,6 +197,11 @@ function BehindTheScenes({ open, onOpenChange }: { open: boolean; onOpenChange: 
               </button>
             </Dialog.Close>
           </header>
+
+          {/* Live anomaly ticker */}
+          <AnomalyTicker />
+
+          <Nav.Provider value={navCtx}>
 
           <div className="flex min-h-0 flex-1">
             {/* Sidebar */}
@@ -210,13 +256,15 @@ function BehindTheScenes({ open, onOpenChange }: { open: boolean; onOpenChange: 
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] } }}
                   exit={{ opacity: 0, transition: { duration: 0.12 } }}
-                  className="p-8"
+                  className="p-8 flex flex-col gap-6"
                 >
                   <Sec />
+                  {currentRead ? <AIReadCallout read={currentRead} /> : null}
                 </motion.div>
               </AnimatePresence>
             </main>
           </div>
+          </Nav.Provider>
 
           {/* Footer controls */}
           <footer className="shrink-0 hairline-t flex items-center justify-between h-14 px-5 bg-elev-1">
@@ -256,9 +304,14 @@ function BehindTheScenes({ open, onOpenChange }: { open: boolean; onOpenChange: 
 // SECTION 01 — Annual planning board
 // =============================================================================
 function AnnualBoard() {
+  const nav = useNav()
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
   const weeks = weekendHeat()
   const marquee = weeks.filter((w) => w.note).sort((a, b) => b.intensity - a.intensity).slice(0, 6)
+  const drill = (eventId: string) => {
+    nav.focusEvent(eventId)
+    nav.goToSection('deep')
+  }
   return (
     <div className="flex flex-col gap-6">
       <SectionHead
@@ -292,18 +345,20 @@ function AnnualBoard() {
                       const intensity = e.demand / 100
                       const bg = `color-mix(in oklab, var(--accent) ${Math.round(10 + intensity * 70)}%, transparent)`
                       return (
-                        <div
+                        <button
                           key={e.id}
-                          className="w-full rounded-[6px] border text-[10px] px-1.5 py-1 leading-tight font-medium text-text/90"
+                          type="button"
+                          onClick={() => drill(e.id)}
+                          className="w-full rounded-[6px] border text-[10px] px-1.5 py-1 leading-tight font-medium text-text/90 text-left hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] transition"
                           style={{ background: bg, borderColor: 'color-mix(in oklab, var(--accent) 40%, transparent)' }}
-                          title={`${e.name} — demand ${e.demand}, ${fmtLakh(e.revenuePotential)}`}
+                          title={`${e.name} — demand ${e.demand}, ${fmtLakh(e.revenuePotential)} · click to deep-dive`}
                         >
                           <div className="truncate">{e.name.replace(/·.+/, '').trim().slice(0, 22)}</div>
                           <div className="flex items-baseline justify-between mt-0.5">
                             <span className="font-mono text-[9px] opacity-75">{e.city.slice(0, 3).toUpperCase()}</span>
                             <span className="font-mono text-[9px] opacity-90">{e.demand}</span>
                           </div>
-                        </div>
+                        </button>
                       )
                     })}
                   </div>
@@ -373,6 +428,11 @@ function AnnualBoard() {
 // =============================================================================
 function CategoryDrill() {
   const rows = events2026.filter((e) => e.category === 'Tennis')
+  const nav = useNav()
+  const drill = (eventId: string) => {
+    nav.focusEvent(eventId)
+    nav.goToSection('deep')
+  }
   return (
     <div className="flex flex-col gap-6">
       <SectionHead
@@ -393,7 +453,14 @@ function CategoryDrill() {
           <Col className="text-right">action</Col>
         </div>
         {rows.map((e) => (
-          <div key={e.id} className="grid grid-cols-[1.7fr_1fr_1fr_1fr_1fr_1fr_1.2fr_0.9fr] hairline-b text-[12px]">
+          <div
+            key={e.id}
+            role="button"
+            tabIndex={0}
+            onClick={() => drill(e.id)}
+            onKeyDown={(ev) => (ev.key === 'Enter' || ev.key === ' ') && drill(e.id)}
+            className="grid grid-cols-[1.7fr_1fr_1fr_1fr_1fr_1fr_1.2fr_0.9fr] hairline-b text-[12px] cursor-pointer hover:bg-elev-2 transition-colors"
+          >
             <Col>
               <div className="font-medium text-text">{e.name}</div>
               <div className="text-subtle text-[10.5px]">{e.city} · {e.country}</div>
@@ -451,10 +518,11 @@ function CategoryDrill() {
 }
 
 // =============================================================================
-// SECTION 03 — Event deep dive (Wimbledon)
+// SECTION 03 — Event deep dive (dynamic event selector)
 // =============================================================================
 function EventDeepDive() {
-  const e = events2026.find((ev) => ev.id === 'wimbledon-26')!
+  const nav = useNav()
+  const e = events2026.find((ev) => ev.id === nav.focusedEventId) ?? events2026.find((ev) => ev.id === 'wimbledon-26')!
   return (
     <div className="flex flex-col gap-6">
       <SectionHead
@@ -462,6 +530,7 @@ function EventDeepDive() {
         title={`${e.name} · ${e.start.slice(0, 7)}`}
         blurb="Every signal the curator needs to decide how much inventory to hold, at what price, for whom. Market demand, supply state, persona split, recommended inventory pushes and the rationale behind them."
       />
+      <EventSelector focusedId={e.id} onSelect={(id) => nav.focusEvent(id)} />
 
       <div className="grid grid-cols-4 gap-4">
         <Metric label="Composite demand" value={e.demand} max={100} accent />
@@ -508,6 +577,9 @@ function EventDeepDive() {
                 <span className="font-mono text-[11px] text-[color:var(--accent)] shrink-0">{t.propensity}</span>
               </li>
             ))}
+            {(topTargetsByEvent[e.id] ?? []).length === 0 ? (
+              <li className="text-subtle text-[11px] italic">No historical attendee match in CRM — cold-outreach cohort will be generated.</li>
+            ) : null}
           </ul>
         </Panel>
         <Panel title="Recommendation" sub="curator action + rationale">
@@ -1081,6 +1153,162 @@ function KeyRatios({ rows }: { rows: EventRow[] }) {
       <Ratio label="Avg hospitality attach" value={`${avgAttach}%`} />
       <Ratio label="Inventory sell-through" value={`${soldPct}%`} tone="accent" />
     </ul>
+  )
+}
+
+// =============================================================================
+// Live anomaly ticker — shown under the dialog header
+// =============================================================================
+function AnomalyTicker() {
+  const [offset, setOffset] = useState(0)
+  useEffect(() => {
+    const id = setInterval(() => setOffset((o) => (o + 1) % anomalies.length), 3800)
+    return () => clearInterval(id)
+  }, [])
+  // Show a run of 3 visible entries starting at offset.
+  const visible = useMemo(() => {
+    const out: Anomaly[] = []
+    for (let i = 0; i < 3; i++) out.push(anomalies[(offset + i) % anomalies.length]!)
+    return out
+  }, [offset])
+  return (
+    <div className="shrink-0 hairline-b bg-[oklch(16%_0.012_260)] px-5 h-10 flex items-center gap-4 overflow-hidden">
+      <div className="flex items-center gap-2 shrink-0">
+        <span className="relative size-2 flex">
+          <span className="absolute inset-0 rounded-full bg-[color:var(--accent)]" />
+          <span className="absolute inset-0 rounded-full bg-[color:var(--accent)] animate-ping opacity-70" style={{ animationDuration: '1.6s' }} />
+        </span>
+        <span className="text-[10.5px] uppercase tracking-[0.22em] text-[color:var(--accent)] font-mono font-medium">
+          live signals
+        </span>
+        <span className="text-border">·</span>
+      </div>
+      <div className="flex-1 min-w-0 flex items-center gap-8 overflow-hidden">
+        <AnimatePresence mode="popLayout" initial={false}>
+          {visible.map((a) => (
+            <motion.div
+              key={a.id}
+              layout
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } }}
+              exit={{ opacity: 0, x: -20, transition: { duration: 0.3 } }}
+              className="flex items-center gap-2.5 text-[11.5px] whitespace-nowrap"
+            >
+              <span
+                className={cn(
+                  'size-1.5 rounded-full',
+                  a.severity === 'action'
+                    ? 'bg-[color:var(--accent)]'
+                    : a.severity === 'watch'
+                      ? 'bg-[color:var(--trace)]'
+                      : 'bg-muted',
+                )}
+              />
+              <span className="text-text font-medium">{a.event}</span>
+              <span className="text-muted">·</span>
+              <span className="text-muted">{a.signal}</span>
+              <span
+                className={cn(
+                  'font-mono',
+                  a.severity === 'action' ? 'text-[color:var(--accent)]' : a.severity === 'watch' ? 'text-[color:var(--trace)]' : 'text-muted',
+                )}
+              >
+                {a.delta}
+              </span>
+              <span className="text-subtle font-mono text-[10.5px]">· {a.ago}</span>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+      <span className="text-[10px] text-subtle font-mono tracking-[0.14em] shrink-0">
+        {anomalies.length} anomalies · last scan 00:23
+      </span>
+    </div>
+  )
+}
+
+// =============================================================================
+// AI read callout — one strategic insight per section
+// =============================================================================
+function AIReadCallout({ read }: { read: AIRead }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0, transition: { duration: 0.5, delay: 0.25, ease: [0.16, 1, 0.3, 1] } }}
+      className="rounded-[var(--radius-md)] overflow-hidden relative"
+      style={{
+        background:
+          'linear-gradient(135deg, color-mix(in oklab, var(--accent) 14%, transparent), color-mix(in oklab, var(--trace) 8%, transparent))',
+        border: '1px solid color-mix(in oklab, var(--accent) 36%, transparent)',
+      }}
+    >
+      <span
+        aria-hidden
+        className="absolute inset-x-0 top-0 h-px pointer-events-none"
+        style={{
+          background:
+            'linear-gradient(90deg, transparent, color-mix(in oklab, var(--accent) 70%, transparent) 20%, color-mix(in oklab, var(--accent) 70%, transparent) 80%, transparent)',
+        }}
+      />
+      <div className="p-5 flex items-start gap-4">
+        <div
+          className="shrink-0 size-10 rounded-full flex items-center justify-center"
+          style={{
+            background: 'color-mix(in oklab, var(--accent) 22%, transparent)',
+            border: '1px solid color-mix(in oklab, var(--accent) 48%, transparent)',
+          }}
+        >
+          <Sparkles className="size-4 text-[color:var(--accent)]" strokeWidth={1.5} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline justify-between gap-3 mb-1.5">
+            <span className="text-[10px] uppercase tracking-[0.22em] text-[color:var(--accent)] font-mono font-medium">
+              AI read · {read.tag}
+            </span>
+            <span className="text-[10.5px] font-mono text-subtle">
+              confidence <span className="text-[color:var(--accent)]">{read.confidence}</span>
+            </span>
+          </div>
+          <p className="text-[13.5px] text-text leading-[1.65]">{read.insight}</p>
+          <div className="mt-3 flex items-center gap-2 text-[10.5px] text-subtle font-mono">
+            <span>gemini-3-flash · thinking: medium</span>
+            <span className="text-border">·</span>
+            <span>signals ingested across 14 sources</span>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+// =============================================================================
+// Event selector — horizontal chip row for the deep-dive
+// =============================================================================
+function EventSelector({ focusedId, onSelect }: { focusedId: string; onSelect: (id: string) => void }) {
+  return (
+    <div className="flex items-center gap-2 overflow-x-auto pb-1">
+      <span className="text-[10px] uppercase tracking-[0.22em] text-subtle font-mono font-medium shrink-0 mr-1">
+        event ·
+      </span>
+      {events2026.map((e) => {
+        const active = e.id === focusedId
+        return (
+          <button
+            key={e.id}
+            type="button"
+            onClick={() => onSelect(e.id)}
+            className={cn(
+              'shrink-0 h-7 px-3 rounded-full border text-[11.5px] font-medium whitespace-nowrap transition-colors',
+              active
+                ? 'bg-[color:var(--accent)] border-[color:var(--accent)] text-[oklch(16%_0_0)]'
+                : 'bg-elev-1 border-[color:var(--border)] text-muted hover:text-text hover:border-[color:var(--border-strong)]',
+            )}
+          >
+            {e.name.split('·')[0].trim()}
+          </button>
+        )
+      })}
+    </div>
   )
 }
 
