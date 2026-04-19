@@ -40,8 +40,8 @@ export function ChatPane() {
   const isEmpty = messages.length === 0
 
   return (
-    <div className="flex h-full flex-col">
-      <div ref={scrollRef} className="flex-1 overflow-y-auto">
+    <div className="flex h-full min-h-0 flex-col">
+      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
         {isEmpty ? <EmptyState onPick={(q) => send(q)} /> : <Transcript />}
       </div>
       <form

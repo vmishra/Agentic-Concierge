@@ -11,9 +11,9 @@ export function Workspace() {
   const isStreaming = useApp((s) => s.isStreaming)
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <ActivityRibbon />
-      <div className="flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto">
         {artifacts.length === 0 ? (
           <EmptyWorkspace streaming={isStreaming} />
         ) : (
