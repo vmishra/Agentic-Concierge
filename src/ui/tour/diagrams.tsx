@@ -716,7 +716,7 @@ export function A2UIDiagram() {
         </text>
       </motion.g>
 
-      {/* Right: mock card */}
+      {/* Right: rendered card mock */}
       <motion.g variants={fadeUp} style={{ transitionDelay: '1.0s' }}>
         <rect x={330} y={44} width={240} height={384} rx={12} fill={SOFT} stroke={ACCENT} strokeWidth={1.1} filter="url(#glow)" />
         <text x={346} y={70} fontSize="9.5" letterSpacing="2.2" fill={SUBTLE}>
@@ -725,31 +725,52 @@ export function A2UIDiagram() {
         <text x={346} y={96} fontSize="13" fill="white" fontWeight={600} className="display">
           Three hotels
         </text>
+      </motion.g>
 
-        {[0, 1, 2].map((i) => (
+      {/* Three hotel mini-cards — positioned absolutely (no inner transform
+          group, which was clashing with motion's scale animation and
+          pushing cards off their coordinates). */}
+      {[0, 1, 2].map((i) => {
+        const cx = 346
+        const cy = 118 + i * 92
+        return (
           <motion.g
             key={i}
-            transform={`translate(346, ${118 + i * 92})`}
-            variants={popIn}
-            style={{ transitionDelay: `${1.15 + i * 0.12}s` }}
+            variants={fadeUp}
+            style={{ transitionDelay: `${1.2 + i * 0.12}s` }}
           >
-            <rect width={208} height={80} rx={8} fill={SOFT2} stroke={BORDER} />
-            <text x={12} y={20} fontSize="7.5" fill={SUBTLE} letterSpacing="1.3">
+            <rect x={cx} y={cy} width={208} height={80} rx={8} fill={SOFT2} stroke={BORDER} />
+            <text x={cx + 12} y={cy + 20} fontSize="7.5" fill={SUBTLE} letterSpacing="1.3">
               {['FIVE-STAR', 'FIVE-STAR', 'PALACE'][i]}
             </text>
-            <text x={12} y={38} fontSize="11" fill={MUTED} fontWeight={500}>
+            <text x={cx + 12} y={cy + 38} fontSize="11" fill={MUTED} fontWeight={500}>
               {['Waldorf Astoria', 'Ritz-Carlton', 'Emirates Palace'][i]}
             </text>
-            <rect x={12} y={48} width={54} height={16} rx={8} fill={`color-mix(in oklab, ${TRACE} 16%, transparent)`} />
-            <text x={16} y={60} fontSize="9" fill={TRACE}>
+            <rect
+              x={cx + 12}
+              y={cy + 48}
+              width={54}
+              height={16}
+              rx={8}
+              fill={`color-mix(in oklab, ${TRACE} 16%, transparent)`}
+            />
+            <text x={cx + 16} y={cy + 60} fontSize="9" fill={TRACE}>
               step-free
             </text>
-            <text x={198} y={64} fontSize="11" fill={ACCENT} textAnchor="end" fontWeight={500} fontFamily="Geist Mono, ui-monospace, monospace">
+            <text
+              x={cx + 198}
+              y={cy + 64}
+              fontSize="11"
+              fill={ACCENT}
+              textAnchor="end"
+              fontWeight={500}
+              fontFamily="Geist Mono, ui-monospace, monospace"
+            >
               {['₹0.95L', '₹0.78L', '₹1.68L'][i]}
             </text>
           </motion.g>
-        ))}
-      </motion.g>
+        )
+      })}
     </motion.svg>
   )
 }
