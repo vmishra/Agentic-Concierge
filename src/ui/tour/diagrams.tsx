@@ -60,11 +60,11 @@ function Defs() {
       </marker>
       {/* Inline keyframes so each diagram is self-sufficient. */}
       <style>{`
-        @keyframes flowDash { to { stroke-dashoffset: -32 } }
+        @keyframes flowDash { to { stroke-dashoffset: -40 } }
         @keyframes pulseRing {
           0%   { r: 44; opacity: 0.55 }
-          70%  { r: 76; opacity: 0 }
-          100% { r: 76; opacity: 0 }
+          70%  { r: 88; opacity: 0 }
+          100% { r: 88; opacity: 0 }
         }
         @keyframes pulseNode {
           0%,100% { r: 4.5; opacity: 1 }
@@ -84,19 +84,21 @@ function Defs() {
   )
 }
 
+// Deliberately slower entrance animations — the tour doubles as a slide
+// deck, and the audience should have time to read each label as it lands.
 const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 6 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.34, ease: [0.16, 1, 0.3, 1] } },
+  hidden: { opacity: 0, y: 8 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
 }
 
 const drawLine: Variants = {
   hidden: { pathLength: 0, opacity: 0 },
-  show: { pathLength: 1, opacity: 1, transition: { duration: 0.9, ease: 'easeOut' } },
+  show: { pathLength: 1, opacity: 1, transition: { duration: 1.6, ease: 'easeOut' } },
 }
 
 const popIn: Variants = {
-  hidden: { opacity: 0, scale: 0.82 },
-  show: { opacity: 1, scale: 1, transition: { type: 'spring', stiffness: 280, damping: 22 } },
+  hidden: { opacity: 0, scale: 0.86 },
+  show: { opacity: 1, scale: 1, transition: { type: 'spring', stiffness: 180, damping: 22 } },
 }
 
 // ---------------------------------------------------------------------------
@@ -170,7 +172,7 @@ export function OvertureDiagram() {
           strokeWidth={1.4}
           strokeDasharray="2 5"
           fill="none"
-          style={{ animation: 'flowDash 1.6s linear infinite' }}
+          style={{ animation: 'flowDash 2.80s linear infinite' }}
         />
       </g>
 
@@ -200,7 +202,7 @@ export function OvertureDiagram() {
           r={3}
           fill={ACCENT}
           opacity={0.6}
-          style={{ animation: 'pulseNodeSmall 1.6s ease-in-out infinite' }}
+          style={{ animation: 'pulseNodeSmall 2.24s ease-in-out infinite' }}
         />
       </motion.g>
 
@@ -423,7 +425,7 @@ export function SkillsDiagram() {
         strokeDasharray="3 6"
         fill="none"
         filter="url(#glow)"
-        style={{ animation: 'flowDash 1.8s linear infinite' }}
+        style={{ animation: 'flowDash 3.15s linear infinite' }}
       />
       <motion.g variants={fadeUp} style={{ transitionDelay: '1.05s' }}>
         <rect
@@ -640,7 +642,7 @@ export function MemoryDiagram() {
         fill="none"
         filter="url(#glow)"
         markerEnd="url(#arTrace)"
-        style={{ animation: 'flowDash 1.8s linear infinite' }}
+        style={{ animation: 'flowDash 3.15s linear infinite' }}
       />
     </motion.svg>
   )
@@ -709,7 +711,7 @@ export function A2UIDiagram() {
           stroke={ACCENT}
           strokeWidth={1.4}
           strokeDasharray="2 5"
-          style={{ animation: 'flowDash 1.4s linear infinite' }}
+          style={{ animation: 'flowDash 2.45s linear infinite' }}
         />
         <text x={308} y={226} fontSize="9.5" fill={ACCENT} textAnchor="middle" letterSpacing="1.8">
           render
@@ -833,7 +835,7 @@ export function RunnerDiagram() {
                 strokeWidth={1.3}
                 strokeDasharray="2 4"
                 filter="url(#glow)"
-                style={{ animation: 'flowDash 1.2s linear infinite' }}
+                style={{ animation: 'flowDash 2.10s linear infinite' }}
               />
             ) : null}
           </motion.g>
@@ -858,7 +860,7 @@ export function RunnerDiagram() {
         strokeDasharray="2 5"
         fill="none"
         filter="url(#glow)"
-        style={{ animation: 'flowDash 1.6s linear infinite' }}
+        style={{ animation: 'flowDash 2.80s linear infinite' }}
       />
       <text
         x={588}
@@ -961,7 +963,7 @@ export function HierarchyDiagram() {
           cy={L1.y + 20}
           r={4}
           fill={ACCENT}
-          style={{ animation: 'pulseNode 1.6s ease-in-out infinite' }}
+          style={{ animation: 'pulseNode 2.24s ease-in-out infinite' }}
         />
         <text x={L1.x + 10} y={L1.y + 25} fontSize="12" fill={ACCENT} textAnchor="middle" fontWeight={600} letterSpacing="1">
           CONCIERGE
@@ -1065,7 +1067,7 @@ export function HitlDiagram() {
             r={p.active ? 7 : 5}
             fill={p.color}
             filter={p.pulse || p.active ? 'url(#glow)' : undefined}
-            style={p.pulse ? { animation: 'pulseNode 1.3s ease-in-out infinite' } : undefined}
+            style={p.pulse ? { animation: 'pulseNode 1.82s ease-in-out infinite' } : undefined}
           />
           {(p.label.split('\n')).map((ln, li) => (
             <text
@@ -1094,7 +1096,7 @@ export function HitlDiagram() {
         strokeDasharray="3 6"
         strokeOpacity={0.75}
         filter="url(#glow)"
-        style={{ animation: 'flowDash 2.2s linear infinite' }}
+        style={{ animation: 'flowDash 3.85s linear infinite' }}
       />
 
       {/* Above: the model's stream */}
@@ -1211,7 +1213,7 @@ export function ContextDiagram() {
           cy={172}
           r={4}
           fill={TRACE}
-          style={{ animation: 'pulseNodeSmall 1.6s ease-in-out infinite' }}
+          style={{ animation: 'pulseNodeSmall 2.24s ease-in-out infinite' }}
         />
         <text x={80} y={178} fontSize="12" fill={TRACE} fontFamily="Geist Mono, ui-monospace, monospace">
           context · compact (−120k)
@@ -1227,7 +1229,7 @@ export function ContextDiagram() {
         fill="none"
         filter="url(#glow)"
         markerEnd="url(#arTrace)"
-        style={{ animation: 'flowDash 1.6s linear infinite' }}
+        style={{ animation: 'flowDash 2.80s linear infinite' }}
       />
 
       {/* After */}
