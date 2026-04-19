@@ -28,76 +28,72 @@ interface Slide {
 const slides = (): Slide[] => [
   {
     id: 'overture',
-    kicker: '01 · overture',
+    kicker: '01 · the architecture',
     title: 'One voice. Five minds. Three layers underneath.',
     blurb:
-      'What you see on the left is a Concierge. What you do not see: five specialists, a lazy tool catalog, an embedding-indexed memory service, and a long-context budgeter — all running in your browser tab with zero backend.',
-    takeaway: 'The whole system is ~2,200 lines. The ADK emulation layer is ~900. No server calls in Mock mode.',
+      'What you see in the chat is a Concierge. What you do not see: five specialist agents coordinating in parallel over Google\'s Agent Development Kit (ADK), a lazy tool catalog, an embedding-indexed memory service, and a long-context budgeter — all threading a single itinerary for you.',
+    takeaway:
+      'Coordinator + sub-agents via the agent-as-tool pattern — the shape of the emerging Agent-to-Agent (A2A) protocol. Every delegation is visible in the ribbon.',
     diagram: <OvertureDiagram />,
-    sourcePath: 'src/adk/',
+    sourcePath: 'src/adk/ · src/agents/',
   },
   {
     id: 'skills',
-    kicker: '02 · skills',
+    kicker: '02 · skills · on-demand context',
     title: 'Agents start lean. Skills attach on demand.',
     blurb:
-      'An agent advertises skill names it may use. Only when the coordinator decides one is needed does the runner load it — attaching its tools to the toolbelt, merging its instructions into the prompt, and emitting a visible `skill · load` chip in the ribbon. This is how progressive disclosure works at the prompting layer.',
-    takeaway: 'A skill is reusable: instructions + tools + resources. Five skills ship with the prototype.',
+      'An agent advertises the skill names it *may* need. The runner loads one only when the coordinator decides it is required — attaching that skill\'s tool bundle, merging its instructions into the prompt, and emitting a visible `skill · load` chip in the ribbon. This is how progressive disclosure works at the prompting layer, rather than stuffing everything into a system prompt up front.',
+    takeaway: 'A skill is reusable: instructions + tools + resources. Five ship with the concierge; you can add more without touching the agents.',
     diagram: <SkillsDiagram />,
-    code: `// src/skills/hospitality-tiers.ts
-export const hospitalityTiersSkill: Skill = {
+    code: `export const hospitalityTiersSkill: Skill = {
   name: 'hospitality-tiers',
-  description: 'Know what each tier includes — paddock, debenture, pavilion.',
-  instructions: \`Explain tiers in human terms; never promise, always arrange.\`,
-  tools: [
-    defineLazyTool(
-      { name: 'tiers_for_event', input: { /* JSON-Schema */ } },
-      async () => defineTool(/* impl loaded only when called */),
-    ),
-  ],
+  description: 'Paddock, debenture, pavilion — what each tier includes.',
+  instructions: 'Explain tiers in human terms; never promise, always arrange.',
+  tools: [ defineLazyTool(/* manifest */, async () => /* impl */) ],
 }`,
     sourcePath: 'src/adk/skill.ts',
   },
   {
     id: 'tools',
-    kicker: '03 · tools',
+    kicker: '03 · tools · manifests first',
     title: 'Manifests now, implementations later.',
     blurb:
-      'Every tool is registered as a tiny manifest — name, description, JSON-Schema. The real implementation is a dynamic `import()` that only runs when the tool is about to be called. Parallel tool calls fan out with `Promise.all`. Errors are structured events, not exceptions.',
-    takeaway: 'The toolbelt expands as you watch — `tool · load` chips appear exactly when needed.',
+      'Every tool is registered as a small manifest — a name, a description, a JSON-Schema. The real implementation is a dynamic `import()` that runs only when the tool is about to execute. Parallel tool calls fan out with `Promise.all`; errors surface as structured events; the coordinator can auto-retry. Gemini 3 Flash is benchmarked to handle 100+ tool calls reliably; the harness matches that shape.',
+    takeaway: 'The toolbelt expands as you watch — `tool · load` events appear in the ribbon exactly when needed.',
     diagram: <ToolsDiagram />,
-    code: `// the catalog stores only manifests
-catalog.register(lazyTool)           // cheap: a pointer
+    code: `// cheap: catalog stores only pointers
+catalog.register(lazyTool)
 
-// load happens at call time
-const tool = await catalog.load(name)  // triggers import()
+// dynamic import happens at call time
+const tool   = await catalog.load(name)
 const result = await tool.execute(args, ctx)`,
     sourcePath: 'src/adk/tool.ts',
   },
   {
     id: 'memory',
-    kicker: '04 · memory',
-    title: 'What the concierge quietly remembers.',
+    kicker: '04 · memory · repeat-user personalisation',
+    title: 'First-time, second-time, tenth-time — the concierge just knows.',
     blurb:
-      'Memory is two layers. Session state (short-term, a Map the agents share within a turn) and a long-term store backed by localStorage with embedding-indexed recall. On every user message, the Personalizer runs a semantic search; the top-k hits thread themselves into the coordinator\'s next prompt.',
-    takeaway: 'Say "remember my partner is vegan" — reload the page — the fact survives. Hash embedder in Mock; Gemini embeddings in Live.',
+      'Memory is two layers. Session state (a scratchpad the agents share within a turn) and long-term memory — embedding-indexed by Google\'s multimodal gemini-embedding-2 model. Every "remember X" writes a fact; every new user message triggers a semantic top-k recall that threads matching facts into the coordinator\'s prompt before it speaks. Walk away, close the browser, return next quarter — the vegan note, the mobility need, the preferred carrier are already in place. No forms. No re-briefing.',
+    takeaway:
+      'Write · embed · persist · recall. Same shape as ADK Memory Service and Vertex AI Memory Bank — swap localStorage for Firestore and you get cross-device, cross-session personalisation for free.',
     diagram: <MemoryDiagram />,
-    code: `// src/adk/memory.ts
-await memory.add('Guest prefers business-class arrivals before midnight')
-const hits = await memory.search('flights and timing', 4, 0.22)
-// → returns top-k facts ranked by cosine similarity`,
+    code: `// repeat-user loop
+await memory.add('partner is vegan; mobility need for guest 2')
+const hits = await memory.search('dietary and accessibility', 4, 0.22)
+//   ↓  threaded into the coordinator's next system prompt
+injectedInstructions.push(\`Known preferences: \${hits.map(h => '· ' + h.fact.text).join('\\n')}\`)`,
     sourcePath: 'src/adk/memory.ts',
   },
   {
     id: 'a2ui',
-    kicker: '05 · a2ui',
+    kicker: '05 · a2ui · generative UI',
     title: 'The agent speaks in components, not markdown.',
     blurb:
-      'Instead of writing HTML or (worse) free-form prose the user has to parse, the agent emits typed JSON for a pre-approved component catalog — itineraries, option grids, comparisons, pricing breakdowns, research scratchpads. The frontend renders from its own design tokens. Safer than arbitrary markup, portable, interactive by default.',
-    takeaway: 'Nine component kinds ship. Each refinement chip below a card is a one-tap re-query — no typing.',
+      'Google\'s emerging Agent-to-UI (A2UI) protocol turns agent output into typed JSON against a pre-approved component catalog — itineraries, option grids, comparisons, pricing breakdowns, research scratchpads. The frontend renders it with its own design tokens. Safer than free-form HTML, more portable than screenshots, interactive by default. Every refinement chip under a card is a one-tap re-query routed back to the right specialist.',
+    takeaway: 'Nine component kinds ship. The contract is declarative — swap the renderer, all past artifacts re-theme.',
     diagram: <A2UIDiagram />,
-    code: `// The agent yields this…
-{ kind: 'option_card_grid',
+    code: `{ kind: 'option_card_grid',
   title: 'Three hotels, threaded with accessibility',
   columns: 3,
   options: [
@@ -115,21 +111,39 @@ const hits = await memory.search('flights and timing', 4, 0.22)
   },
   {
     id: 'runner',
-    kicker: '06 · runner',
+    kicker: '06 · runner · one turn',
     title: 'A single turn, ~300 lines.',
     blurb:
-      'The runner assembles the prompt (system + active skills + memory hits), streams from the provider, executes tool calls in parallel, dispatches sub-agents with their own sessions, and loops until the provider says done. Sub-agent artifacts bubble into the same workspace — the guest sees one cohesive story.',
-    takeaway: 'run() is the one file worth reading end-to-end. Provider-agnostic: Mock and Gemini plug into the same interface.',
+      'The runner assembles the prompt (system + active skills + memory hits), streams from the model, executes tool calls in parallel, dispatches sub-agents over the agent-as-tool / A2A interface with their own sessions, and loops until the stream signals done. Sub-agent artifacts bubble into the same workspace; the guest sees one cohesive story.',
+    takeaway: 'One file, end-to-end. Provider-agnostic: the same loop runs behind Gemini 3 Flash and any future model.',
     diagram: <RunnerDiagram />,
     sourcePath: 'src/adk/runner.ts',
   },
   {
-    id: 'context',
-    kicker: '07 · context discipline',
-    title: 'Even 1M tokens need manners.',
+    id: 'deep-research',
+    kicker: '07 · deep research · LoopAgent',
+    title: 'A research agent you can watch think.',
     blurb:
-      'Gemini 3 Flash has a million-token context window. That is not a licence to stuff it. A context budget meter (top chrome) tracks approximate usage; when the window crosses a soft threshold, the Compactor folds older turns into a short `priorSummary` note and drops them from the live window. The ribbon shows the token count saved.',
-    takeaway: 'Watch the `ctx` meter as you iterate — the live window stays lean even as the conversation grows.',
+      'The Researcher is an ADK LoopAgent — the same deterministic workflow primitive Google uses in the Interactions API for long-running, iterative research. Four steps per cycle: plan → search → critique → refine. Every iteration emits a research_step trace and updates a live scratchpad artifact with sub-questions, findings, and citations. The guest sees the work, not a silent spinner.',
+    takeaway: 'LoopAgent + ParallelAgent + SequentialAgent compose into any research or planning flow. Same primitives as the public ADK, transparent by default.',
+    diagram: <RunnerDiagram />,
+    code: `// src/agents/index.ts
+const researcher = new LlmAgent({
+  name: 'Researcher',
+  skills: ['event-catalog'],
+  thinking: 'medium',
+  systemPrompt: \`Iterate plan → search → critique → refine.
+    Emit a research_scratchpad artifact; return a short brief.\`,
+})`,
+    sourcePath: 'src/adk/workflow.ts',
+  },
+  {
+    id: 'context',
+    kicker: '08 · context discipline',
+    title: 'Even a million tokens deserve manners.',
+    blurb:
+      'Gemini 3 Flash carries a 1M-token context window. That is not a licence to stuff it. A live budget meter (top chrome) tracks usage; when the window crosses a soft threshold, the Compactor folds older turns into a `priorSummary` note and drops them from the live window. The ribbon shows the tokens saved. Deep Research iterations — plan → search → critique → refine — stay visible without bloating the prompt.',
+    takeaway: 'Watch the `ctx` meter while you iterate. The live window stays lean even as the conversation grows.',
     diagram: <ContextDiagram />,
     sourcePath: 'src/adk/context-budget.ts',
   },

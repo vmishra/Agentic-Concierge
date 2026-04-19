@@ -18,6 +18,7 @@ import {
   fmt,
   hotelCard,
   isPostTool,
+  isScenario,
   lastMessage,
   matchUser,
   sum,
@@ -271,11 +272,13 @@ const conciergeGiftPost: Beat = {
 
 // A catch-all for common refinement chips so the conversation stays in-flow
 // even when the user clicks a short label rather than typing a sentence.
+// Gated on isScenario(f1) so it never fires in a Wimbledon or Cricket thread.
 const conciergeRefineGeneric: Beat = {
   id: 'concierge.f1.refine-generic',
   match: (input) =>
     !isPostTool(input) &&
-    matchUser(input, /best value|compare|cheaper|less expensive|ceremonial|quieter|closer to (venue|grounds|circuit)|more central|earlier date|alternate|alternative|family|sea.?facing|split (across|the)|up ?grade|downgrade|shortlist/i),
+    isScenario(input, 'f1') &&
+    matchUser(input, /best value|compare|cheaper|less expensive|ceremonial|quieter|closer to (venue|grounds|circuit)|closer to (the )?pit|more central|earlier date|alternate|alternative|family|sea.?facing|split (across|the)|up ?grade|downgrade|shortlist/i),
   steps: (input) => {
     const q = (input.messages.find((m) => m.role === 'user' && /best value|compare|cheaper|less expensive|ceremonial|quieter|closer|central|alternate|family|sea|split|up ?grade|shortlist/i.test(m.content))?.content ?? '').toLowerCase()
     const lead =
@@ -321,7 +324,7 @@ const conciergeRefineGenericPost: Beat = {
     const hasRefineUser = input.messages.some(
       (m) => m.role === 'user' && /best value|compare|cheaper|less expensive|ceremonial|quieter|closer|central|alternate|family|sea|split|up ?grade|shortlist/i.test(m.content),
     )
-    return isPostTool(input) && hasRefineUser && (last?.toolName === 'agent.Experience' || last?.toolName === 'agent.Logistics')
+    return isScenario(input, 'f1') && isPostTool(input) && hasRefineUser && (last?.toolName === 'agent.Experience' || last?.toolName === 'agent.Logistics')
   },
   steps: () => [
     { kind: 'say', text: 'Updated in the workspace. The rest of the plan stays as is — we can keep iterating, or say proceed when you are ready.' },
@@ -539,7 +542,7 @@ const researcherInsiderPost: Beat = {
 
 const logisticsPre: Beat = {
   id: 'logistics.f1.pre',
-  match: (input) => !isPostTool(input) && matchUser(input, /abu dhabi|yas|hotel|step-free|accessibility/i),
+  match: (input) => !isPostTool(input) && matchUser(input, /abu dhabi|yas|f1|formula|grand prix/i),
   steps: () => [
     {
       kind: 'toolCall',
@@ -552,7 +555,10 @@ const logisticsPre: Beat = {
 
 const logisticsPost: Beat = {
   id: 'logistics.f1.post',
-  match: (input) => isPostTool(input) && !!toolResult(input, 'hotels_near_event'),
+  match: (input) =>
+    isPostTool(input) &&
+    !!toolResult(input, 'hotels_near_event') &&
+    matchUser(input, /abu dhabi|yas|f1|formula|grand prix/i),
   steps: (input) => {
     const list = toolResult<Hotel[]>(input, 'hotels_near_event') ?? hotelsIn(CITY)
     const sorted = [...list].sort((a, b) => a.distanceToVenueKm - b.distanceToVenueKm)
@@ -590,7 +596,7 @@ const logisticsPost: Beat = {
 
 const experiencePre: Beat = {
   id: 'experience.f1.pre',
-  match: (input) => !isPostTool(input) && matchUser(input, /hospitality|paddock|grandstand|trophy|tier|experience|f1|abu dhabi/i),
+  match: (input) => !isPostTool(input) && matchUser(input, /paddock|grandstand|trophy|f1|abu dhabi|yas|grand prix/i),
   steps: () => [
     {
       kind: 'toolCall',
@@ -603,7 +609,10 @@ const experiencePre: Beat = {
 
 const experiencePost: Beat = {
   id: 'experience.f1.post',
-  match: (input) => isPostTool(input) && !!toolResult(input, 'tiers_for_event'),
+  match: (input) =>
+    isPostTool(input) &&
+    !!toolResult(input, 'tiers_for_event') &&
+    matchUser(input, /abu dhabi|yas|f1|formula|grand prix|paddock|trophy/i),
   steps: (input) => {
     const list = toolResult<HospitalityTier[]>(input, 'tiers_for_event') ?? hospitalityForEvent(EVENT_ID)
     // Infer a "pit-lane" re-rank from the latest user text
@@ -658,7 +667,7 @@ function rankPaddock(t: HospitalityTier): number {
 
 const budgetBeat: Beat = {
   id: 'budget.f1',
-  match: (input) => matchUser(input, /f1|abu dhabi|budget|price|cost/i),
+  match: (input) => matchUser(input, /f1|abu dhabi|yas|formula|grand prix/i),
   steps: (input) => {
     const tiers = hospitalityForEvent(EVENT_ID)
     const trophyOrMid = tiers[1] ?? tiers[0]!

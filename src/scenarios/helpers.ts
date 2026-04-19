@@ -41,6 +41,36 @@ export function matchUser(input: GenerateInput, re: RegExp): boolean {
   return false
 }
 
+/**
+ * Scenario lock-in — scans all prior user messages for scenario-specific
+ * keywords so follow-up refinements (chip clicks, short phrases) route to
+ * the correct scenario's beats even when the chip text itself is ambiguous.
+ */
+const SCENARIO_PATTERNS = {
+  f1: /f1|formula|abu dhabi|yas marina|paddock|grand prix/i,
+  wim: /wimbledon|sw19|grass.?court|debenture|centre court|pavilion\b/i,
+  cr: /cricket|wankhede|test match|border.?gavaskar|india v australia|ind v aus/i,
+} as const
+
+export type ScenarioKind = keyof typeof SCENARIO_PATTERNS
+
+export function isScenario(input: GenerateInput, kind: ScenarioKind): boolean {
+  const re = SCENARIO_PATTERNS[kind]
+  return input.messages.some((m) => m.role === 'user' && re.test(m.content))
+}
+
+/** Which scenario has the user committed to? Most-recent-wins if multiple. */
+export function activeScenario(input: GenerateInput): ScenarioKind | undefined {
+  for (let i = input.messages.length - 1; i >= 0; i--) {
+    const m = input.messages[i]
+    if (m?.role !== 'user') continue
+    for (const k of Object.keys(SCENARIO_PATTERNS) as ScenarioKind[]) {
+      if (SCENARIO_PATTERNS[k].test(m.content)) return k
+    }
+  }
+  return undefined
+}
+
 export function userInputText(input: GenerateInput): string {
   for (let i = input.messages.length - 1; i >= 0; i--) {
     const m = input.messages[i]

@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Settings2 } from 'lucide-react'
 import { useApp } from '@/state/store'
-import { cn } from '@/lib/cn'
 import { SettingsSheet } from './SettingsSheet'
 import { ArchitectureTourButton } from './tour/ArchitectureTour'
 
@@ -55,19 +54,15 @@ function Wordmark() {
   )
 }
 
-function ModePill({ mode, label }: { mode: 'mock' | 'live'; label: string }) {
+function ModePill({ mode: _mode, label: _label }: { mode: 'mock' | 'live'; label: string }) {
+  // Neutral, audience-facing label. The technical mode lives in Settings.
   return (
     <div
-      className={cn(
-        'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border text-[11px] font-medium',
-        mode === 'live'
-          ? 'bg-[color:var(--accent-soft)] border-[color:var(--accent-soft)] text-[color:var(--accent)]'
-          : 'bg-elev-1 border-[color:var(--border)] text-muted',
-      )}
-      title={mode === 'live' ? 'Streaming real Gemini responses' : 'Scripted — no network calls'}
+      className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border border-[color:var(--accent-soft)] bg-[color:var(--accent-soft)] text-[color:var(--accent)] text-[11px] font-medium"
+      title="Gemini 3 Flash · 1M context"
     >
       <span className="size-1.5 rounded-full bg-current opacity-80" />
-      {label}
+      gemini-3-flash
     </div>
   )
 }

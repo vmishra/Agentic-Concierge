@@ -70,11 +70,22 @@ async function buildRuntime(mode: Mode, apiKey?: string): Promise<Runtime> {
   const memory = new MemoryService(new LocalMemoryBackend(), embedder)
 
   let provider: Provider
+  let liveEmbedder: Embedder | undefined
   if (mode === 'live' && apiKey) {
     const { GeminiProvider } = await import('@/adk/providers/gemini')
-    provider = new GeminiProvider({ apiKey, model: 'gemini-3-flash' })
+    const gp = new GeminiProvider({ apiKey, model: 'gemini-3-flash', embedding: 'gemini-embedding-2' })
+    provider = gp
+    // Wire Gemini embeddings into the memory service when Live.
+    liveEmbedder = {
+      dim: 768,
+      embed: (texts) => gp.embed(texts),
+    }
   } else {
     provider = new MockProvider({ script: allScenarios, charDelayMs: 4, stepDelayMs: 140 })
+  }
+  if (liveEmbedder) {
+    // Swap the memory service to use Gemini embeddings.
+    Object.assign(memory, { embedder: liveEmbedder })
   }
 
   const { concierge } = buildAgents({ provider })

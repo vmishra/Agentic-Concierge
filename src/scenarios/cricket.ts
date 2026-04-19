@@ -8,6 +8,7 @@ import {
   fmt,
   hotelCard,
   isPostTool,
+  isScenario,
   lastMessage,
   matchUser,
   openers,
@@ -243,7 +244,7 @@ const researchPost: Beat = {
 
 const logisticsPre: Beat = {
   id: 'l.cr.pre',
-  match: (input) => !isPostTool(input) && matchUser(input, /mumbai|cricket|wankhede|hotel/i),
+  match: (input) => !isPostTool(input) && matchUser(input, /mumbai|cricket|wankhede|test match|border.?gavaskar|ind v aus|india v australia/i),
   steps: () => [{ kind: 'toolCall', name: 'hotels_near_event', args: { city: CITY }, id: 'c.l.h' }],
 }
 
@@ -279,7 +280,7 @@ const logisticsPost: Beat = {
 
 const experiencePre: Beat = {
   id: 'e.cr.pre',
-  match: (input) => !isPostTool(input) && matchUser(input, /cricket|wankhede|hospitality|pavilion/i),
+  match: (input) => !isPostTool(input) && matchUser(input, /cricket|wankhede|test match|border.?gavaskar|india v australia/i),
   steps: () => [{ kind: 'toolCall', name: 'tiers_for_event', args: { eventId: EVENT_ID }, id: 'c.e.t' }],
 }
 
@@ -336,10 +337,50 @@ const budgetBeat: Beat = {
   },
 }
 
+const crRefine: Beat = {
+  id: 'concierge.cr.refine-generic',
+  match: (input) =>
+    !isPostTool(input) &&
+    isScenario(input, 'cr') &&
+    matchUser(input, /compare|cheaper|sea.?facing|one hotel|keep the group|split|shortlist|club.?house|corporate box|upgrade/i),
+  steps: (input) => {
+    const q = (input.messages.find((m) => m.role === 'user' && /compare|sea|keep|split|club|corporate box|upgrade/i.test(m.content))?.content ?? '').toLowerCase()
+    const lead =
+      /compare/.test(q)
+        ? 'Placing the two shapes side by side. Same ten guests, same two days — differences are in group dynamics and the Saturday briefing window.'
+        : /sea/.test(q)
+          ? 'Sea-facing only — the Taj heritage wing and the Oberoi executive floors fit.'
+          : /one hotel|keep/.test(q)
+            ? 'Keeping the whole group in one hotel — the Taj carries ten rooms without losing the corporate floor feel.'
+            : /split/.test(q)
+              ? 'Splitting across Corporate Box and Club House Pavilion — matched by preference, reunited at dinner.'
+              : 'Noted. Re-running the relevant shortlist.'
+    return [
+      { kind: 'say', text: lead + ' ', gapMs: 80 },
+      { kind: 'toolCall', name: 'agent.Experience', args: { task: `Refine Wankhede Test match hospitality to match: ${q}` }, id: 'call.refine.cr.exp' },
+      { kind: 'toolCall', name: 'agent.Logistics', args: { task: `Refine Mumbai cricket hotel shortlist to match: ${q}` }, id: 'call.refine.cr.log' },
+    ]
+  },
+}
+
+const crRefinePost: Beat = {
+  id: 'concierge.cr.refine-generic-post',
+  match: (input) => {
+    const last = lastMessage(input)
+    const hasRefine = input.messages.some(
+      (m) => m.role === 'user' && /compare|sea|keep|split|club|corporate box|upgrade/i.test(m.content),
+    )
+    return isScenario(input, 'cr') && isPostTool(input) && hasRefine && (last?.toolName === 'agent.Experience' || last?.toolName === 'agent.Logistics')
+  },
+  steps: () => [{ kind: 'say', text: 'Updated in the workspace. The rest of the plan stays as is.' }],
+}
+
+void openers
+
 export const cricketScript: ScenarioScript = {
   name: 'cricket',
   beats: {
-    Concierge: [insiderIntent, insiderPost, weather, dossier, intro, assemble],
+    Concierge: [insiderIntent, insiderPost, weather, dossier, crRefine, crRefinePost, intro, assemble],
     Researcher: [researchPre, researchPost],
     Logistics: [logisticsPre, logisticsPost],
     Experience: [experiencePre, experiencePost],

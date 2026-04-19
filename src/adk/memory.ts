@@ -2,9 +2,11 @@
  * Memory — short-term Session state + long-term embedding-backed store.
  *
  * Mirrors ADK's Memory Service: `add` ingests a fact, `search` retrieves
- * top-k by semantic similarity. Live mode uses Gemini embeddings; Mock mode
- * uses a small, deterministic hash-based embedding so recall is reproducible
- * in a scripted demo without network calls.
+ * top-k by semantic similarity. The Embedder interface is provider-neutral;
+ * in the Live path we wire Google's gemini-embedding-2 (multimodal — text,
+ * image, audio, video) for production-grade recall. The offline path uses a
+ * deterministic hash-based embedder so recall is reproducible without a
+ * network call.
  */
 
 export interface MemoryFact {

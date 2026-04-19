@@ -8,6 +8,7 @@ import {
   fmt,
   hotelCard,
   isPostTool,
+  isScenario,
   lastMessage,
   matchUser,
   openers,
@@ -228,7 +229,7 @@ function scaleM(m: Money, factor: number): Money {
 
 const researchPre: Beat = {
   id: 'r.wim.pre',
-  match: (input) => !isPostTool(input) && matchUser(input, /wimbledon|tennis/i),
+  match: (input) => !isPostTool(input) && matchUser(input, /wimbledon|sw19|tennis|grass/i),
   steps: () => [
     { kind: 'trace', event: { kind: 'research.step', step: 1, question: 'Confirm the 2026 Championships window.', status: 'plan' } },
     { kind: 'toolCall', name: 'search_events', args: { query: 'Wimbledon' }, id: 'w.r.search' },
@@ -237,7 +238,7 @@ const researchPre: Beat = {
 
 const researchPost: Beat = {
   id: 'r.wim.post',
-  match: (input) => isPostTool(input) && matchUser(input, /wimbledon|tennis/i),
+  match: (input) => isPostTool(input) && matchUser(input, /wimbledon|sw19|tennis|grass/i),
   steps: () => {
     const ev = findEvent(EVENT_ID)
     return [
@@ -266,7 +267,7 @@ const researchPost: Beat = {
 
 const logisticsPre: Beat = {
   id: 'l.wim.pre',
-  match: (input) => !isPostTool(input) && matchUser(input, /wimbledon|london|tennis|hotel/i),
+  match: (input) => !isPostTool(input) && matchUser(input, /wimbledon|london|sw19|grass.?court|centre court|debenture/i),
   steps: () => [
     { kind: 'toolCall', name: 'hotels_near_event', args: { city: CITY }, id: 'w.l.h' },
   ],
@@ -302,7 +303,7 @@ const logisticsPost: Beat = {
 
 const experiencePre: Beat = {
   id: 'e.wim.pre',
-  match: (input) => !isPostTool(input) && matchUser(input, /wimbledon|debenture|hospitality|tennis/i),
+  match: (input) => !isPostTool(input) && matchUser(input, /wimbledon|sw19|debenture|centre court|tennis|pavilion/i),
   steps: () => [{ kind: 'toolCall', name: 'tiers_for_event', args: { eventId: EVENT_ID }, id: 'w.e.t' }],
 }
 
@@ -349,7 +350,7 @@ const experiencePost: Beat = {
 
 const budgetBeat: Beat = {
   id: 'b.wim',
-  match: (input) => matchUser(input, /wimbledon|tennis/i),
+  match: (input) => matchUser(input, /wimbledon|sw19|tennis|grass/i),
   steps: () => {
     const tier = hospitalityForEvent(EVENT_ID)[0]!
     const hotel = hotelsIn(CITY)[0]!
@@ -377,10 +378,54 @@ const budgetBeat: Beat = {
   },
 }
 
+// Catch-all refinement for the Wimbledon thread — chip labels like "Closer to
+// the grounds", "Compare these three", "Debenture", "Quieter hotel".
+const wimRefine: Beat = {
+  id: 'concierge.wim.refine-generic',
+  match: (input) =>
+    !isPostTool(input) &&
+    isScenario(input, 'wim') &&
+    matchUser(input, /compare|cheaper|quieter|closer to (the )?grounds|more central|childcare|family|upgrade|shortlist|no\.?1 court|pavilion/i),
+  steps: (input) => {
+    const q = (input.messages.find((m) => m.role === 'user' && /compare|quieter|closer|central|childcare|family|upgrade|pavilion|no\.?1|debenture/i.test(m.content))?.content ?? '').toLowerCase()
+    const lead =
+      /compare/.test(q)
+        ? 'Side by side. Same family of six, same five nights — the differences are the court, the pavilion lunch, and the walk-to-gate time.'
+        : /closer to (the )?grounds/.test(q)
+          ? 'Moving closer — Hotel du Vin on Wimbledon Common puts you a short walk from the queue on finals day.'
+          : /central/.test(q)
+            ? 'Shifting central — the Rosewood in Holborn pairs best with theatre and museum days.'
+            : /childcare/.test(q)
+              ? 'Adding daytime childcare on the tennis days. Vetted, on-site, dietary-aware.'
+              : /debenture|no\.?1 court|pavilion/.test(q)
+                ? 'Adjusting the tier mix — upgrading the adults to Centre Court debenture, holding pavilion for the children\'s day.'
+                : 'Noted. Re-running the relevant shortlist.'
+    return [
+      { kind: 'say', text: lead + ' ', gapMs: 80 },
+      { kind: 'toolCall', name: 'agent.Experience', args: { task: `Refine Wimbledon hospitality to match: ${q}` }, id: 'call.refine.w.exp' },
+      { kind: 'toolCall', name: 'agent.Logistics', args: { task: `Refine Wimbledon London hotels to match: ${q}` }, id: 'call.refine.w.log' },
+    ]
+  },
+}
+
+const wimRefinePost: Beat = {
+  id: 'concierge.wim.refine-generic-post',
+  match: (input) => {
+    const last = lastMessage(input)
+    const hasRefine = input.messages.some(
+      (m) => m.role === 'user' && /compare|quieter|closer|central|childcare|family|upgrade|pavilion|no\.?1|debenture/i.test(m.content),
+    )
+    return isScenario(input, 'wim') && isPostTool(input) && hasRefine && (last?.toolName === 'agent.Experience' || last?.toolName === 'agent.Logistics')
+  },
+  steps: () => [{ kind: 'say', text: 'Updated in the workspace. Everything else stays as is.' }],
+}
+
+void openers
+
 export const wimbledonScript: ScenarioScript = {
   name: 'wimbledon',
   beats: {
-    Concierge: [closer, closerPost, dossier, intro, assemble],
+    Concierge: [closer, closerPost, dossier, wimRefine, wimRefinePost, intro, assemble],
     Researcher: [researchPre, researchPost],
     Logistics: [logisticsPre, logisticsPost],
     Experience: [experiencePre, experiencePost],

@@ -21,17 +21,31 @@ const THINKING_BUDGET: Record<NonNullable<GenerateInput['thinking']>, number> = 
 export interface GeminiProviderOptions {
   apiKey: string
   model?: string
+  /** Embedding model used by the MemoryService in Live mode. */
+  embedding?: string
 }
 
 export class GeminiProvider implements Provider {
   name = 'gemini'
-  label = 'Live · Gemini 3 Flash'
+  label = 'gemini-3-flash'
   private ai: GoogleGenAI
   private modelId: string
+  readonly embeddingModel: string
 
   constructor(opts: GeminiProviderOptions) {
     this.ai = new GoogleGenAI({ apiKey: opts.apiKey })
     this.modelId = opts.model ?? 'gemini-3-flash'
+    this.embeddingModel = opts.embedding ?? 'gemini-embedding-2'
+  }
+
+  /** Gemini embeddings — used by MemoryService in Live mode for semantic recall. */
+  async embed(texts: string[]): Promise<number[][]> {
+    const res = await this.ai.models.embedContent({
+      model: this.embeddingModel,
+      contents: texts.map((t) => ({ role: 'user', parts: [{ text: t }] })),
+    } as Parameters<typeof this.ai.models.embedContent>[0])
+    const embeddings = (res as { embeddings?: { values: number[] }[] }).embeddings
+    return (embeddings ?? []).map((e) => e.values)
   }
 
   model() {

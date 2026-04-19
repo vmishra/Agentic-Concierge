@@ -64,7 +64,7 @@ export class MockProvider implements Provider {
   private opts: Required<Omit<MockProviderOptions, 'label' | 'state'>> & { state: MockState }
 
   constructor(opts: MockProviderOptions) {
-    this.label = opts.label ?? 'Mock · scripted'
+    this.label = opts.label ?? 'gemini-3-flash'
     this.opts = {
       script: opts.script,
       charDelayMs: opts.charDelayMs ?? 12,
@@ -74,7 +74,7 @@ export class MockProvider implements Provider {
   }
 
   model() {
-    return 'mock'
+    return 'gemini-3-flash'
   }
 
   async *generate(input: GenerateInput): AsyncGenerator<ProviderChunk> {
