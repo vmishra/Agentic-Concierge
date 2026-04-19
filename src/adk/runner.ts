@@ -126,30 +126,26 @@ export async function run(
     (m) => m.name,
   )
 
-  // 7. Prepare an assistant message to stream into.
-  const assistantMsg: Message = {
-    id: crypto.randomUUID(),
-    role: 'assistant',
-    content: '',
-    createdAt: Date.now(),
-    streaming: true,
-    agent: agent.name,
-    artifacts: [],
-    toolCalls: [],
-  }
-  session.messages.push(assistantMsg)
+  // 7. Prepare the first assistant message to stream into.
+  let currentMsg = newAssistantMessage(agent.name)
+  session.messages.push(currentMsg)
 
   // 8. Run the provider loop, handling tool calls as they arrive, until done.
   //    A tool call causes a sub-turn: we execute the tool, append the
-  //    tool-result message, and re-invoke the provider.
+  //    tool-result message, start a FRESH assistant message for the
+  //    coordinator's follow-up, and re-invoke the provider. Separate
+  //    bubbles per phase make the conversation feel natural rather than
+  //    a single wall of text.
   let keepGoing = true
   let safety = 0
+  let lastMessage = currentMsg
+
   while (keepGoing && safety++ < 6) {
     keepGoing = false
 
     const stream = provider.generate({
       system: injectedInstructions.join('\n\n'),
-      messages: session.messages.filter((m) => m.id !== assistantMsg.id || m.content),
+      messages: session.messages.filter((m) => m.id !== currentMsg.id || m.content),
       tools: toolManifests,
       agent: agent.name,
       thinking: agent.thinking,
@@ -160,7 +156,7 @@ export async function run(
 
     for await (const chunk of stream) {
       if (opts.signal?.aborted) break
-      applyChunk(chunk, assistantMsg, opts, agent.name, pendingCalls)
+      applyChunk(chunk, currentMsg, opts, agent.name, pendingCalls)
     }
 
     // 9. If the provider produced tool calls, execute and feed results back.
@@ -219,16 +215,47 @@ export async function run(
         })
       }
 
-      // Let the provider continue reasoning over the new tool output.
+      // Finalize the current (pre-tool) message and open a fresh one for
+      // the follow-up. Trim trailing whitespace from the paragraph breaks.
+      finalizeMessage(currentMsg)
+      currentMsg = newAssistantMessage(agent.name)
+      session.messages.push(currentMsg)
+      lastMessage = currentMsg
+
       keepGoing = true
-      assistantMsg.toolCalls = []
     }
   }
 
-  assistantMsg.streaming = false
-  await agent.callbacks?.afterModel?.(assistantMsg, { agent: agent.name, onTrace: opts.onTrace })
-  opts.onDone?.(assistantMsg)
-  return assistantMsg
+  finalizeMessage(currentMsg)
+  // If the final message stayed empty (e.g., only tool calls, no follow-up
+  // text), drop it so we don't render a ghost bubble.
+  if (!currentMsg.content.trim() && (currentMsg.artifacts?.length ?? 0) === 0) {
+    const idx = session.messages.indexOf(currentMsg)
+    if (idx >= 0) session.messages.splice(idx, 1)
+    lastMessage = session.messages[session.messages.length - 1] ?? currentMsg
+  }
+
+  await agent.callbacks?.afterModel?.(lastMessage, { agent: agent.name, onTrace: opts.onTrace })
+  opts.onDone?.(lastMessage)
+  return lastMessage
+}
+
+function newAssistantMessage(agentName: string): Message {
+  return {
+    id: crypto.randomUUID(),
+    role: 'assistant',
+    content: '',
+    createdAt: Date.now(),
+    streaming: true,
+    agent: agentName,
+    artifacts: [],
+    toolCalls: [],
+  }
+}
+
+function finalizeMessage(msg: Message): void {
+  msg.streaming = false
+  msg.content = msg.content.replace(/\s+$/, '')
 }
 
 function applyChunk(

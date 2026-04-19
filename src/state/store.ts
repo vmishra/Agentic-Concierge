@@ -75,13 +75,11 @@ async function buildRuntime(mode: Mode, apiKey?: string): Promise<Runtime> {
     const { GeminiProvider } = await import('@/adk/providers/gemini')
     const gp = new GeminiProvider({ apiKey, model: 'gemini-3-flash', embedding: 'gemini-embedding-2' })
     provider = gp
-    // Wire Gemini embeddings into the memory service when Live.
-    liveEmbedder = {
-      dim: 768,
-      embed: (texts) => gp.embed(texts),
-    }
+    liveEmbedder = { dim: 768, embed: (texts) => gp.embed(texts) }
   } else {
-    provider = new MockProvider({ script: allScenarios, charDelayMs: 4, stepDelayMs: 140 })
+    // Demo pacing — slow enough that a viewer can watch each skill load,
+    // sub-agent dispatch, and artifact land without missing a beat.
+    provider = new MockProvider({ script: allScenarios, charDelayMs: 18, stepDelayMs: 420 })
   }
   if (liveEmbedder) {
     // Swap the memory service to use Gemini embeddings.
@@ -104,12 +102,11 @@ function attachProvider(agent: LlmAgent, provider: Provider) {
 
 const DEFAULT_BUDGET = 1_000_000
 const initialRuntime: Runtime = (() => {
-  // synchronous initial runtime (mock); any switch to live awaits the import.
   const catalog = new ToolCatalog()
   const skills = buildSkills()
   const embedder = new HashEmbedder()
   const memory = new MemoryService(new LocalMemoryBackend(), embedder)
-  const provider = new MockProvider({ script: allScenarios, charDelayMs: 4, stepDelayMs: 140 })
+  const provider = new MockProvider({ script: allScenarios, charDelayMs: 18, stepDelayMs: 420 })
   const { concierge } = buildAgents({ provider })
   attachProvider(concierge, provider)
   concierge.primeCatalog(catalog)

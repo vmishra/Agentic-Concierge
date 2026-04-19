@@ -94,7 +94,10 @@ export class MockProvider implements Provider {
             yield { type: 'text', text: piece }
             await sleep(charDelayMs * piece.length)
           }
-          if (step.gapMs) await sleep(step.gapMs)
+          // Paragraph break after every say — consecutive says become paragraphs.
+          yield { type: 'text', text: '\n\n' }
+          // Explicit gap, or a short natural pause.
+          await sleep(step.gapMs ?? 260)
           break
         case 'think':
           yield { type: 'thinking', text: step.text }
