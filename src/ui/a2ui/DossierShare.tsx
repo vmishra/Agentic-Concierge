@@ -48,7 +48,7 @@ const F1_PARTY: Party = {
   nights: 3,
   total: '₹27.41 L',
   guests: [
-    { name: 'Mr Vikas Mishra', role: 'Primary guest · lead signatory', note: 'non-vegetarian · Continental cuisine preferred' },
+    { name: 'Mr Vikas Mishra', role: 'Primary guest · lead signatory', note: 'Continental palate · French and Italian leanings' },
     { name: 'Mrs Atrika Mishra', role: 'Spouse', note: 'plant-based dining across all services' },
     { name: 'Mr Rohan Kapur', role: 'Co-guest' },
     { name: 'Mrs Naina Kapur', role: 'Co-guest', note: 'step-free access · uses a powered mobility chair' },
@@ -59,7 +59,7 @@ const F1_PARTY: Party = {
     detail:
       'Grand Marina Suite with adjoining Deluxe Room. Step-free layout; roll-in shower; lowered bedside call button. North-lift access. Late check-out on departure day pre-arranged.',
     amenities: [
-      'In-room Continental breakfast configured for Mr Vikas Mishra (non-vegetarian)',
+      'In-room Continental breakfast curated for Mr Vikas Mishra — eggs to order, charcuterie board, fresh pastries',
       'In-room plant-based breakfast menu configured for Mrs Atrika Mishra',
       'Dedicated butler across the stay (Omar)',
       '24-hour accessible turndown service',
@@ -105,11 +105,11 @@ const F1_PARTY: Party = {
     'Medical ready-line noted with the on-ground host',
   ],
   dietary: [
-    'Non-vegetarian · Continental cuisine preferred for Mr Vikas Mishra',
-    'Plant-based menu configured across hotel breakfast, lounge lunch, and evening dinners for Mrs Atrika Mishra',
-    'Hospitality kitchen briefed 72 hours ahead; separate prep stations for veg and non-veg',
-    'Sealed allergen protocol confirmed with F1 Experiences catering lead',
-    'In-flight business-class meal selections submitted per passenger (Continental · non-veg for Mr Mishra, plant-based for Mrs Mishra)',
+    'Mr Vikas Mishra — a Continental palate across every service; classical French and Italian preparations favoured, with meat, fish, and seafood welcomed',
+    'Mrs Atrika Mishra — plant-based across breakfast, lounge lunch, and evening dinners; dairy-free where possible',
+    'Hospitality kitchen briefed seventy-two hours ahead, with separate prep stations and sealed service to avoid cross-contact',
+    'F1 Experiences catering lead holds the allergen protocol on file, signed',
+    'In-flight selections submitted per passenger — Continental for Mr Mishra, plant-based for Mrs Mishra — on both legs',
   ],
   lines: [
     { label: 'Hospitality · Trophy Lounge', sub: '4 guests × 3 days', amount: '₹17,00,000' },
@@ -137,7 +137,7 @@ const WIM_PARTY: Party = {
   nights: 5,
   total: '₹70.00 L',
   guests: [
-    { name: 'Mr Vikas Mishra', role: 'Primary guest', note: 'non-vegetarian · Continental cuisine preferred' },
+    { name: 'Mr Vikas Mishra', role: 'Primary guest', note: 'Continental palate · French and Italian leanings' },
     { name: 'Mrs Atrika Mishra', role: 'Spouse', note: 'plant-based dining' },
     { name: 'Mr Devansh Mishra', role: 'Brother' },
     { name: 'Mrs Sanya Mishra', role: 'Sister-in-law', note: 'gluten-free' },
@@ -164,10 +164,10 @@ const WIM_PARTY: Party = {
   cultural: ['Private V&A morning · Sunday 5 July · family guide Felix', 'Family matinee at Regents Park Open Air Theatre', 'Early dinner at The Ivy · Monday'],
   accessibility: [],
   dietary: [
-    'Non-vegetarian · Continental cuisine preferred for Mr Vikas Mishra',
-    'Plant-based configuration across all dining (Mrs Atrika Mishra)',
-    'Gluten-free configuration across all dining (Mrs Sanya Mishra)',
-    'Pavilion kitchen pre-briefed; each guest noted by name with their profile',
+    'Mr Vikas Mishra — a Continental palate; classical preparations favoured across every service',
+    'Mrs Atrika Mishra — plant-based across all services',
+    'Mrs Sanya Mishra — gluten-free across all services',
+    'Pavilion kitchen pre-briefed; each guest carried on the roster by name with their profile',
   ],
   lines: [
     { label: 'Hospitality · No.1 Court + Centre Court debenture', sub: '6 guests × 2 match days', amount: '₹26,40,000' },
